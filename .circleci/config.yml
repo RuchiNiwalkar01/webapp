@@ -1,0 +1,22 @@
+---
+version: 2
+jobs:
+  pr_check:
+    docker:
+      - image : circleci/openjdk:11.0.5-jdk-stretch
+    steps:
+      - checkout
+      - run:
+          name: Testing circleci
+          command: echo "Hello World! Welcome circleci"
+      - run:
+          name: Step into webApplication
+          command: |
+             pwd
+
+
+workflows:
+  version: 2
+  pr-check-workflow:
+    jobs:
+    - pr_check
