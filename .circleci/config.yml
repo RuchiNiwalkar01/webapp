@@ -13,7 +13,7 @@ jobs:
           name: Step into webApplication
           command: |
              pwd
-             cd webApplication
+             cd Assignment1
              ls -al
 
 
