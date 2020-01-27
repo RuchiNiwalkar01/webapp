@@ -15,6 +15,9 @@ jobs:
              pwd
              cd Assignment1
              ls -al
+             sudo apt-get update
+             sudo apt install maven
+             mvn clean install
 
 
 workflows:
