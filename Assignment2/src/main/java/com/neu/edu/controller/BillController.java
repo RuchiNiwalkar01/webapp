@@ -137,6 +137,56 @@ public class BillController {
 	}
 
 
+	//Get all bill by Specific User
+	//200 for success, 401 no authorization
+	@GetMapping(value = "/v1/bills")
+	public ResponseEntity<?> getAllBillsByUserId(HttpServletRequest request, HttpServletResponse response)
+	{
+		String authorization = request.getHeader("Authorization");
+		JsonObject entity = new JsonObject();
+		if(authorization != null && authorization.toLowerCase().startsWith("basic"))
+		{
+			// Authorization: Basic base64credentials
+			authorization = authorization.replaceFirst("Basic ", "");
+
+			String credentials = new String(Base64.getDecoder().decode(authorization.getBytes()));
+
+			// authorization = username:password
+			String [] userCredentials = credentials.split(":", 2);
+			String email = userCredentials[0];
+
+			String password = userCredentials[1];
+
+			User user = userRepository.findByemail(email);
+			if(user == null)
+			{
+				entity.addProperty("message", "Please enter correct Username or Password");
+			}
+			else if(user != null && !bCryptPasswordEncoder.matches(password, user.getPassword()))
+			{
+				entity.addProperty("message", "The Password is Invalid");
+				return new ResponseEntity<String>(entity.toString() , HttpStatus.BAD_REQUEST);
+			}
+			else
+			{
+				List<Bill> listOfBills = billRepository.findByUserId(user.getId());
+				user.setPassword(null);
+				if(listOfBills.size() ==0)
+				{
+					entity.addProperty("message", "The bills do not exist");
+					return new ResponseEntity<String>(entity.toString() , HttpStatus.NOT_FOUND);
+				}
+				return new ResponseEntity<List<Bill>>(listOfBills , HttpStatus.OK);
+			}					
+
+			return new ResponseEntity<String>(entity.toString() , HttpStatus.UNAUTHORIZED);
+		}
+
+		entity.addProperty("message", "Invalid. Unable to Authenticate");	
+		return new ResponseEntity<String>(entity.toString() , HttpStatus.UNAUTHORIZED);
+	}
+	
+
 	
 	
 	public Boolean validateDate(String date) 
