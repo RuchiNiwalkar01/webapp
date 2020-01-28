@@ -9,7 +9,7 @@ jobs:
       - run:
           name: Testing circleci
           command: echo "Hello World! Welcome circleci"
-       - run:
+      - run:
           name: Step into webApplication
           command: |
              pwd
