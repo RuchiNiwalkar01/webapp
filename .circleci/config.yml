@@ -13,7 +13,7 @@ jobs:
           name: Step into webApplication
           command: |
              pwd
-             cd Assignment1
+             cd Assignment2
              ls -al
              sudo apt-get update
              sudo apt install maven
