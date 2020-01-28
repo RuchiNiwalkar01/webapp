@@ -17,7 +17,8 @@ jobs:
              ls -al
              sudo apt-get update
              sudo apt install maven
-             ./mvnw clean install
+             mvn clean install
+             
 
 
 workflows:
