@@ -187,6 +187,262 @@ public class BillController {
 	}
 	
 
+	//Get Specific bill by billId
+	@GetMapping(value = "/v1/bill/{id}")
+	public ResponseEntity<?> getSingleBillbyId(HttpServletRequest request, HttpServletResponse response, @PathVariable(value="id") @NotBlank @NotNull String billId)
+	{
+		String authorization = request.getHeader("Authorization");
+		JsonObject entity = new JsonObject();
+		if(authorization != null && authorization.toLowerCase().startsWith("basic"))
+		{
+			// Authorization: Basic base64credentials
+			authorization = authorization.replaceFirst("Basic ", "");
+
+			String credentials = new String(Base64.getDecoder().decode(authorization.getBytes()));
+
+			// authorization = username:password
+			String [] userCredentials = credentials.split(":", 2);
+			String email = userCredentials[0];
+
+			String password = userCredentials[1];
+
+			User user = userRepository.findByemail(email);
+			if(user == null)
+			{
+				entity.addProperty("message", "Please enter correct Username or Password");
+			}
+			else if(user != null && !bCryptPasswordEncoder.matches(password, user.getPassword()))
+			{
+				entity.addProperty("message", "The Password is Invalid");
+				return new ResponseEntity<String>(entity.toString() , HttpStatus.BAD_REQUEST);
+			}
+			else
+			{
+				List<Bill> listOfBills = billRepository.findByUserId(user.getId());
+				Bill bill = billRepositoryfindaSpecificBill.findById(billId);
+				if(listOfBills.size() > 0)
+				{
+					if(bill != null)
+					{
+						if(listOfBills.contains(bill))
+						{
+							user.setPassword(null);
+							return new ResponseEntity<Bill>(bill , HttpStatus.OK);
+						}			
+						else
+						{
+							entity.addProperty("message", "The bill does not belong to particular user");
+							return new ResponseEntity<String>(entity.toString(), HttpStatus.UNAUTHORIZED);
+						}
+					}
+					else
+					{
+						entity.addProperty("message", "The bill does not exist.");
+						return new ResponseEntity<String>(entity.toString(), HttpStatus.NOT_FOUND);
+					}
+				}
+				else
+				{
+					entity.addProperty("message", "The bill does not exist.");
+					return new ResponseEntity<String>(entity.toString(), HttpStatus.NOT_FOUND);
+					
+				}
+				
+				
+			}					
+
+			return new ResponseEntity<String>(entity.toString() , HttpStatus.UNAUTHORIZED);
+		}
+
+		entity.addProperty("message", "Invalid. Unable to Authenticate");	
+		return new ResponseEntity<String>(entity.toString() , HttpStatus.UNAUTHORIZED);
+	}
+	
+
+	
+	//Update a bill 
+	@PutMapping(value = "/v1/bill/{id}")
+	public ResponseEntity<?> updateBillById(HttpServletRequest request, HttpServletResponse response, @RequestBody Bill bill, @PathVariable(value = "id") @NotBlank @NotNull String billId )
+	{
+		String authorization = request.getHeader("Authorization");
+		JsonObject entity = new JsonObject();
+		if(authorization != null && authorization.toLowerCase().startsWith("basic"))
+		{
+			// Authorization: Basic base64credentials
+			authorization = authorization.replaceFirst("Basic ", "");
+
+			String credentials = new String(Base64.getDecoder().decode(authorization.getBytes()));
+
+			// authorization = username:password
+			String [] userCredentials = credentials.split(":", 2);
+			String email = userCredentials[0];
+
+			String password = userCredentials[1];
+
+			User user = userRepository.findByemail(email);
+			if(user == null)
+			{
+				entity.addProperty("message", "Please enter correct Username or Password");
+			}
+			else if(user != null && !bCryptPasswordEncoder.matches(password, user.getPassword()))
+			{
+				entity.addProperty("message", "The Password is Invalid");
+				return new ResponseEntity<String>(entity.toString() , HttpStatus.BAD_REQUEST);
+			}
+			else
+			{
+				List<Bill> listOfBills = billRepository.findByUserId(user.getId());
+				
+				if(billId != null )
+				{
+					Bill b = billRepositoryfindaSpecificBill.findById(billId);
+					if(listOfBills.size() > 0)
+					{
+						if(b != null)
+						{
+							if(listOfBills.contains(b))
+							{
+								if( (bill.getVendor()!=null && bill.getVendor().trim().length() >0) && bill.getBilldate()!=null  && bill.getDuedate()!=null && 
+										(bill.getAmountdue()>0.00 && bill.getAmountdue()< Double.MAX_VALUE)
+										&& bill.getCategories().size()>0 && bill.getCategories()!= null  && bill.getPaymentStatus() != null )
+									{
+										if(validateDate(bill.getBilldate()) && validateDate(bill.getDuedate()))
+										{
+											String dateFormat = simpleDateFormat.format(new Date());	
+											//b.setUser(user);
+											b.setVendor(bill.getVendor());
+											b.setBilldate(bill.getBilldate());
+											b.setDuedate(bill.getDuedate());
+											b.setAmountdue(bill.getAmountdue());
+											b.setCategories(bill.getCategories());
+											b.setUpdated_ts(dateFormat.toString());
+											b.setPaymentStatus(bill.getPaymentStatus());
+											//b.setOwner_id(user.getId());
+											billRepository.save(b);
+											user.setPassword(null);
+											return new ResponseEntity<Bill>(b , HttpStatus.OK);
+											
+										}		
+										else
+										{
+											entity.addProperty("validation", " Please enter a valid date in YYYY-MM-DD format ");
+											return new ResponseEntity<String>(entity.toString() , HttpStatus.BAD_REQUEST);
+										}
+									}
+								else
+								{
+									entity.addProperty("message", "vendor, bill_date, due_date, amount_due, categories or payment status cannot be empty");
+									return new ResponseEntity<String>(entity.toString() , HttpStatus.BAD_REQUEST);
+								}
+								
+							}			
+							else
+							{
+								entity.addProperty("message", "The bill does not belong to particular user");
+								return new ResponseEntity<String>(entity.toString(), HttpStatus.UNAUTHORIZED);
+							}
+						}
+						else
+						{
+							entity.addProperty("message", "The bill does not exist.");
+							return new ResponseEntity<String>(entity.toString(), HttpStatus.BAD_REQUEST);
+							
+						}
+						
+					}
+					else
+					{
+						entity.addProperty("message", "The bill does not exist.");
+						return new ResponseEntity<String>(entity.toString(), HttpStatus.NOT_FOUND);
+						
+					}
+				}
+				else
+				{
+					entity.addProperty("message", "The bill id cannot be null.");
+					return new ResponseEntity<String>(entity.toString(), HttpStatus.BAD_REQUEST);
+				}
+			}					
+
+			return new ResponseEntity<String>(entity.toString() , HttpStatus.UNAUTHORIZED);
+		}
+
+		entity.addProperty("message", "Invalid. Unable to Authenticate");	
+		return new ResponseEntity<String>(entity.toString() , HttpStatus.UNAUTHORIZED);
+	}
+	
+
+	//Delete a bill 
+	@DeleteMapping(value = "/v1/bill/{id}")
+	public ResponseEntity<?> deleteBillById(HttpServletRequest request, HttpServletResponse response, @PathVariable(value = "id") @NotBlank @NotNull String billId )
+	{
+		String authorization = request.getHeader("Authorization");
+		JsonObject entity = new JsonObject();
+		if(authorization != null && authorization.toLowerCase().startsWith("basic"))
+		{
+			// Authorization: Basic base64credentials
+			authorization = authorization.replaceFirst("Basic ", "");
+
+			String credentials = new String(Base64.getDecoder().decode(authorization.getBytes()));
+
+			// authorization = username:password
+			String [] userCredentials = credentials.split(":", 2);
+			String email = userCredentials[0];
+
+			String password = userCredentials[1];
+
+			User user = userRepository.findByemail(email);
+			if(user == null)
+			{
+				entity.addProperty("message", "Please enter correct Username or Password");
+			}
+			else if(user != null && !bCryptPasswordEncoder.matches(password, user.getPassword()))
+			{
+				entity.addProperty("message", "The Password is Invalid");
+				return new ResponseEntity<String>(entity.toString() , HttpStatus.BAD_REQUEST);
+			}
+			else
+			{
+				List<Bill> listOfBills = billRepository.findByUserId(user.getId());
+				if(billId != null )
+				{
+					if(listOfBills.size() > 0)
+					{	
+						Bill b = billRepositoryfindaSpecificBill.findById(billId);
+						if(listOfBills.contains(b))
+						{			
+							billRepository.delete(b);
+							return new ResponseEntity<String>(HttpStatus.NO_CONTENT);
+						}			
+						else
+						{
+							entity.addProperty("message", "The bill does not belong to particular ");
+							return new ResponseEntity<String>(entity.toString(), HttpStatus.UNAUTHORIZED);
+						}
+					}
+					else
+					{
+						entity.addProperty("message", "The bill does not exist.");
+						return new ResponseEntity<String>(entity.toString(), HttpStatus.NOT_FOUND);
+					}
+				
+				
+				}
+				else
+				{
+					entity.addProperty("message", "The bill is null.");
+					return new ResponseEntity<String>(entity.toString(), HttpStatus.BAD_REQUEST);
+					
+				}
+				
+			}					
+
+			return new ResponseEntity<String>(entity.toString() , HttpStatus.UNAUTHORIZED);
+		}
+
+		entity.addProperty("message", "Invalid. Unable to Authenticate");	
+		return new ResponseEntity<String>(entity.toString() , HttpStatus.UNAUTHORIZED);
+	}
 	
 	
 	public Boolean validateDate(String date) 
