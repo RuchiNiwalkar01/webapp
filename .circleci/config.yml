@@ -1,7 +1,7 @@
 ---
 version: 2
 jobs:
-  pr_check:
+  build:
     docker:
       - image : circleci/openjdk:11.0.5-jdk-stretch
       - image: circleci/mysql:8.0.4
@@ -45,6 +45,6 @@ jobs:
 
 workflows:
   version: 2
-  pr-check-workflow:
+  build_deploy:
     jobs:
-    - pr_check
+    - build
