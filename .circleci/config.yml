@@ -9,7 +9,7 @@ jobs:
       - run:
           name: Testing circleci
           command: echo "Hello World! Welcome circleci"
-      - run:
+       - run:
           name: Step into webApplication
           command: |
              pwd
@@ -17,7 +17,7 @@ jobs:
              ls -al
              sudo apt-get update
              sudo apt install maven
-             mvn clean install
+             ./mvnw clean install
 
 
 workflows:
