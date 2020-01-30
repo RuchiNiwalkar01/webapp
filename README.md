@@ -1,8 +1,7 @@
 # CSYE 6225 - Spring 2020
----
+
 
 ## Technology Stack
----
 
 Programming Language and framework used: Java, Spring Boot Framework, MySQL
 
@@ -13,7 +12,6 @@ Prerequisites for building the application:
 * Install MySQL
 
 ## Build Instructions
----
 
 1.  Import the application from webapp/project folder into STS
 2.  Configure the application.properties by adding your database connection
@@ -36,11 +34,13 @@ Prerequisites for building the application:
 19. Make DELETE http://localhost:8080/v1/bill/id request for deleting a bill.
 
 ## Running Tests
----
 
 Run the unit test from test package- "Run as JUnit"
 
 ## CI/CD
----
 
-Make commit to the git repository to invoke the build in CircleCI for all the repositories
+Make commit to the git repository to invoke the build in CircleCI for the organization repostiory and check pr-check-workflow and build_deploy jobs
+
+## Build Deploy
+
+Make commit to the git repository to invoke the build in CircleCI for organization repository
