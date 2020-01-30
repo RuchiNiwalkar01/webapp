@@ -37,14 +37,22 @@ public class UserController {
 
 	//create a User
 	@PostMapping(value="/v1/user")
-	public ResponseEntity<?> createUser(@Valid @RequestBody User user)
+	public ResponseEntity<?> createUser(@Valid @RequestBody(required = false) User user)
 	{
+		if(user==null)
+		{
+			JsonObject entity = new JsonObject();
+			entity.addProperty("message", "Request Body cannot be null");
+			return new ResponseEntity<String>(entity.toString(), HttpStatus.BAD_REQUEST);
+			
+		}
 		if(userRepository.findByemail(user.getEmail()) != null)
 		{
 			JsonObject entity = new JsonObject();
 			entity.addProperty("message", "User already exists");
 			return new ResponseEntity<String>(entity.toString(), HttpStatus.BAD_REQUEST);
 		}
+		
 	
 		
 		String dateFormat = simpleDateFormat.format(new Date());
@@ -123,7 +131,7 @@ public class UserController {
 
 	//Update User
 	@PutMapping(value = "/v1/user/self")
-	public ResponseEntity<String> updateUser(@Valid @RequestBody User user, HttpServletRequest request, HttpServletResponse response)
+	public ResponseEntity<String> updateUser(@Valid @RequestBody(required = false) User user, HttpServletRequest request, HttpServletResponse response)
 	{
 		String authorization = request.getHeader("Authorization");
 		JsonObject entity = new JsonObject();
@@ -148,6 +156,13 @@ public class UserController {
 			}
 			else
 			{ 
+				if(user==null)
+				{
+					
+					entity.addProperty("message", "Request Body cannot be null");
+					return new ResponseEntity<String>(entity.toString(), HttpStatus.BAD_REQUEST);
+					
+				}
 				if((user.getFirstName()!=null && user.getFirstName().trim().length() >0) && (user.getLastName()!=null && user.getLastName().trim().length() >0)  && user.getEmail()!=null && user.getPassword()!=null)
 				{
 					//update firstname, lastname, password here
@@ -198,7 +213,7 @@ public class UserController {
 				}
 				
 			}
-			return new ResponseEntity<String>(entity.toString() , HttpStatus.UNAUTHORIZED);
+			return new ResponseEntity<String>(entity.toString() , HttpStatus.BAD_REQUEST);
 
 		}
 		

@@ -26,20 +26,39 @@ import com.neu.edu.exception.BillException;
 public class RestExceptionHandler{
 	    
 	     
+//	    @ExceptionHandler
+//	    public ResponseEntity<?> onHttpMessageNotReadable(final Exception e) throws Throwable {
+//	        final Throwable cause = e.getCause();
+//	        if (cause == null) 
+//	        {
+//	            return new ResponseEntity<String>("Invalid format",HttpStatus.BAD_REQUEST);
+//	        } 
+//	      
+//	        else if (cause instanceof InvalidFormatException) 
+//	        {
+//	        	 return new ResponseEntity<String>("Amount should be a number or Payment_status field should be in [paid, due, past_due, no_payment_required] ", HttpStatus.BAD_REQUEST);
+//	        } 
+//	        
+//	        return new ResponseEntity<String>("Unauthorized", HttpStatus.BAD_REQUEST);
+//	    }
 	    @ExceptionHandler
-	    public ResponseEntity<?> onHttpMessageNotReadable(final Exception e) throws Throwable {
-	        final Throwable cause = e.getCause();
-	        if (cause == null) 
+	    public ResponseEntity<?> onExceptions( Exception e) {
+	      
+	    	JsonObject entity = new JsonObject();
+	    	
+	        if (e.getMessage().contains("Enum")) 
 	        {
-	            return new ResponseEntity<String>("Invalid format",HttpStatus.BAD_REQUEST);
+	        	entity.addProperty("message", "Payment_status field should be in [ paid, due, past_due, no_payment_required ]");
+	            return new ResponseEntity<String>(entity.toString(),HttpStatus.BAD_REQUEST);
 	        } 
 	      
-	        else if (cause instanceof InvalidFormatException) 
+	        else if (e.getMessage().contains("double")) 
 	        {
-	        	 return new ResponseEntity<String>("Amount should be a number or Payment_status field should be in [paid, due, past_due, no_payment_required] ", HttpStatus.BAD_REQUEST);
+	        	 entity.addProperty("message", "Amount should be a number");
+	        	 return new ResponseEntity<String>(entity.toString(), HttpStatus.BAD_REQUEST);
 	        } 
-	        
-	        return new ResponseEntity<String>("Unauthorized", HttpStatus.UNAUTHORIZED);
+	        entity.addProperty("message", "Invalid type");
+	        return new ResponseEntity<String>(entity.toString(), HttpStatus.BAD_REQUEST);
 	    }
 
 	
