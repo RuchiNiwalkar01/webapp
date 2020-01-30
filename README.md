@@ -5,6 +5,7 @@
 
 Programming Language and framework used: Java, Spring Boot Framework, MySQL
 
+
 Prerequisites for building the application:
 
 * Install Spring Tool Suite (STS)
