@@ -2,6 +2,8 @@ package com.neu.edu.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import javax.persistence.CollectionTable;
 import javax.persistence.Column;
@@ -14,6 +16,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 import org.hibernate.annotations.GenericGenerator;
@@ -29,6 +32,7 @@ public class Bill {
 	@Id 
 	@GeneratedValue(generator="uuid2")
 	@GenericGenerator(name="uuid2", strategy = "uuid2")
+	@JsonProperty("id")
 	@Column(name="id")	
 	private String id;
 	
@@ -51,6 +55,7 @@ public class Bill {
 	@JsonIgnore
 	private User user;
 	
+
 	@JsonProperty("vendor")
 	@Column(name="vendor")	
 	private String vendor;
@@ -63,15 +68,18 @@ public class Bill {
 	@Column(name="due_date")	
 	private String duedate;
 
+
 	@JsonProperty("amount_due")
 	@Column(name="amount_due")
 	private double amountdue;
 	
+	
 	@JsonProperty("categories")
     @ElementCollection
     @CollectionTable(name = "categories", joinColumns = @JoinColumn(name = "id"))
-    private List<String> categories = new ArrayList<String>();
+    private Set<String> categories;
     
+	
 	@JsonProperty("paymentStatus")
     @Enumerated(EnumType.STRING)
     @Column(name="paymentStatus")
@@ -143,11 +151,12 @@ public class Bill {
 		this.amountdue = amountdue;
 	}
 
-	public List<String> getCategories() {
+
+	public Set<String> getCategories() {
 		return categories;
 	}
 
-	public void setCategories(List<String> categories) {
+	public void setCategories(Set<String> categories) {
 		this.categories = categories;
 	}
 
