@@ -1,5 +1,4 @@
 package com.neu.edu.model;
-import java.util.Date;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -43,6 +42,8 @@ public class User {
 	@JsonProperty("account_updated")
 	@Column(name = "account_updated")
 	private String account_updated;
+
+	
 	public User()
 	{
 		
@@ -55,7 +56,7 @@ public class User {
 		this.password = password;
 	}
 	
-
+	
 	//getter setters
 	public String getId() {
 		return id;
