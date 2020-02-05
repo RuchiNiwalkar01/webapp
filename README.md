@@ -45,3 +45,4 @@ Make commit to the git repository to invoke the build in CircleCI for the organi
 ## Build Deploy
 
 Make commit to the git repository to invoke the build in CircleCI for organization repository
+Test
