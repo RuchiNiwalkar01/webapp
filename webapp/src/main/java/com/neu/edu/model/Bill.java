@@ -1,10 +1,7 @@
 package com.neu.edu.model;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
-
+import javax.persistence.CascadeType;
 import javax.persistence.CollectionTable;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
@@ -16,8 +13,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+import javax.persistence.OneToOne;
 
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.OnDelete;
@@ -84,8 +80,12 @@ public class Bill {
     @Enumerated(EnumType.STRING)
     @Column(name="paymentStatus")
     private PaymentStatus paymentStatus;
-
-
+	
+	@JsonProperty("attachment")
+	@OneToOne(optional = true, cascade=CascadeType.ALL)
+	@JoinColumn(name = "FileImageId", nullable = true)
+	private FileImage fileImage;
+	
 
 	public String getId() {
 		return id;
@@ -178,16 +178,25 @@ public class Bill {
 		this.owner_id = owner_id;
 	}
 
+	
+	
+	public FileImage getFileImage() {
+		return fileImage;
+	}
+
+	public void setFileImage(FileImage fileImage) {
+		this.fileImage = fileImage;
+	}
+
 	@Override
 	public String toString() {
 		return "Bill [id=" + id + ", created_ts=" + created_ts + ", updated_ts=" + updated_ts + ", owner_id=" + owner_id
 				+ ", user=" + user + ", vendor=" + vendor + ", billdate=" + billdate + ", duedate=" + duedate
-				+ ", amountdue=" + amountdue + ", categories=" + categories + ", paymentStatus=" + paymentStatus + "]";
+				+ ", amountdue=" + amountdue + ", categories=" + categories + ", paymentStatus=" + paymentStatus
+				+ ", fileImage=" + fileImage + "]";
 	}
 
 
-	
-    
     
 	
     
