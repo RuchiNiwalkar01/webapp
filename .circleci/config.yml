@@ -35,7 +35,7 @@ jobs:
           name: Step into webApplication
           command: |
              pwd
-             cd Assignment2
+             cd webapp
              ls -al
              sudo apt-get update
              sudo apt install maven
@@ -74,7 +74,7 @@ jobs:
           name: Step into webApplication
           command: |
              pwd
-             cd Assignment2
+             cd webapp
              ls -al
              sudo apt-get update
              sudo apt install maven
