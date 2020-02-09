@@ -39,6 +39,7 @@ import com.neu.edu.model.PaymentStatus;
 import com.neu.edu.model.User;
 import com.neu.edu.repository.BillRepository;
 import com.neu.edu.repository.BillRepositoryfindaSpecificBill;
+import com.neu.edu.repository.FileRepository;
 import com.neu.edu.repository.UserRepository;
 
 
@@ -57,6 +58,10 @@ public class BillController {
 	@Autowired
 	private BCryptPasswordEncoder bCryptPasswordEncoder;
 
+	@Autowired
+	FileRepository fileRepository;
+	
+	
 	String pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
 	SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
 
@@ -548,6 +553,7 @@ public class BillController {
 			//^[12]\d{3}([- \/.])((((0[13578])|(1[02]))[\-\s]?(([0-2][0-9])|(3[01])))|(((0[469])|(11))[\-\s]?(([0-2][0-9])|(30)))|(02[\-\s]?[0-2][0-9]))$
 			return date.matches(datevalidator);
 		} 
+		
 		else
 		{
 			return Boolean.FALSE;
