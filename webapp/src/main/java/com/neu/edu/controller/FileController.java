@@ -214,5 +214,103 @@ public class FileController {
 	}
 
 
+	//get a file for particular Bill for particular User
+	@GetMapping(value = "/v1/bill/{id}/file/{fileId}")
+	public ResponseEntity<?> getSingleBillbyId(HttpServletRequest request, @PathVariable(value="fileId" ) String fileId, @PathVariable(value="id" ) String billId)
+	{
+
+		String authorization = request.getHeader("Authorization");
+		JsonObject entity = new JsonObject();
+		if(authorization != null && authorization.toLowerCase().startsWith("basic"))
+		{
+			// Authorization: Basic base64credentials
+			authorization = authorization.replaceFirst("Basic ", "");
+
+			String credentials = new String(Base64.getDecoder().decode(authorization.getBytes()));
+
+			// authorization = username:password
+			String [] userCredentials = credentials.split(":", 2);
+			String email = userCredentials[0];
+
+			String password = userCredentials[1];
+
+			User user = userRepository.findByemail(email);
+			if(user == null)
+			{
+				entity.addProperty("message", "User does not exist. Please enter correct Username or Password");
+			}
+			else if(user != null && !bCryptPasswordEncoder.matches(password, user.getPassword()))
+			{
+				entity.addProperty("message", "The Password is Invalid");
+				return new ResponseEntity<String>(entity.toString() , HttpStatus.UNAUTHORIZED);
+			}
+			else
+			{
+				UUID  uid  = null ;
+				try 
+				{
+					uid = UUID.fromString(billId);
+					//System.out.println("Bill UUID is : ");
+				}
+				catch (Exception e)
+				{
+
+					entity.addProperty("message", "The bill does not exist.");
+					return new ResponseEntity<String>(entity.toString(), HttpStatus.NOT_FOUND);
+				}
+
+				List<Bill> listOfBills = billRepository.findByUserId(user.getId());
+
+
+				Bill bill = billRepositoryfindaSpecificBill.findById(billId);
+				if(listOfBills.size() > 0)
+				{
+					if(bill != null)
+					{
+						if(listOfBills.contains(bill))
+						{
+							//user.setPassword(null);
+							FileImage singleFile = fileRepository.findByfileId(fileId);
+							if(singleFile == null)
+							{
+								entity.addProperty("message", "The file does not exist");
+								return new ResponseEntity<String>(entity.toString(), HttpStatus.NOT_FOUND);
+							}
+							if(bill.getFileImage().getFileId().equals(singleFile.getFileId()))
+							{
+								return new ResponseEntity<FileImage>(singleFile , HttpStatus.OK);
+							}
+							entity.addProperty("message", "The file cannot be viewed as it does not belong to this particular bill");
+							return new ResponseEntity<String>(entity.toString(), HttpStatus.UNAUTHORIZED);
+
+						}			
+						else
+						{
+							entity.addProperty("message", "The bill does not belong to particular user");
+							return new ResponseEntity<String>(entity.toString(), HttpStatus.UNAUTHORIZED);
+						}
+					}
+					else
+					{
+						entity.addProperty("message", "The bill does not exist.");
+						return new ResponseEntity<String>(entity.toString(), HttpStatus.NOT_FOUND);
+					}
+				}
+				else
+				{
+					entity.addProperty("message", "The bill does not exist.");
+					return new ResponseEntity<String>(entity.toString(), HttpStatus.NOT_FOUND);
+				}
+
+
+			}					
+
+			return new ResponseEntity<String>(entity.toString() , HttpStatus.UNAUTHORIZED);
+		}
+
+		entity.addProperty("message", "Invalid. Unable to Authenticate");	
+		return new ResponseEntity<String>(entity.toString() , HttpStatus.UNAUTHORIZED);
+	}
+
 
 }
