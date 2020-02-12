@@ -33,6 +33,9 @@ Prerequisites for building the application:
 17. Make GET http://localhost:8080/v1/bills request for fetching all the bill for a user.
 18. Make GET http://localhost:8080/v1/bill/id request for fetching a particular bill for that user.
 19. Make DELETE http://localhost:8080/v1/bill/id request for deleting a bill.
+20. Make POST http://localhost:8080/v1/bill/{id}/file request for creating a file with required parameters.
+21. Make GET http://localhost:8080/v1/bill/{billId}/file/{fileId} request for fetching the file for that particular bill for that user.
+22. Make DELETE http://localhost:8080/v1/bill/{billId}/file/{fileId}  request for deleting a file for a bill.
 
 ## Running Tests
 
