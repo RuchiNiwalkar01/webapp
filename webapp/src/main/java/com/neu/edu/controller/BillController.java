@@ -1,5 +1,6 @@
 package com.neu.edu.controller;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Base64;
 import java.util.Date;
@@ -35,6 +36,7 @@ import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.google.gson.JsonObject;
 import com.neu.edu.exception.BillException;
 import com.neu.edu.model.Bill;
+import com.neu.edu.model.FileImage;
 import com.neu.edu.model.PaymentStatus;
 import com.neu.edu.model.User;
 import com.neu.edu.repository.BillRepository;
@@ -256,7 +258,7 @@ public class BillController {
 		            try 
 		            {
 		                 uid = UUID.fromString(billId);
-		                 System.out.println("Bill UUID is : ");
+		                 //System.out.println("Bill UUID is : ");
 		            }
 		            catch (Exception e)
 		            {
@@ -350,7 +352,7 @@ public class BillController {
 		            try 
 		            {
 		                 uid = UUID.fromString(billId);
-		                 System.out.println("Bill UUID is : ");
+		                 //System.out.println("Bill UUID is : ");
 		            }
 		            catch (Exception e)
 		            {
@@ -484,7 +486,7 @@ public class BillController {
 		            try 
 		            {
 		                 uid = UUID.fromString(billId);
-		                 System.out.println("Bill UUID is : ");
+		                 //System.out.println("Bill UUID is : ");
 		            }
 		            catch (Exception e)
 		            {
@@ -506,6 +508,16 @@ public class BillController {
 						}
 						if(listOfBills.contains(b))
 						{			
+							if(b.getFileImage()!=null)
+							{
+								FileImage singleFile = fileRepository.findByfileId(b.getFileImage().getFileId());
+								File CurrentFile = new File(singleFile.getUrl());
+								CurrentFile.delete();
+								b.setFileImage(null);
+								fileRepository.delete(singleFile);
+								billRepository.delete(b);
+								return new ResponseEntity<String>(HttpStatus.NO_CONTENT);
+							}
 							billRepository.delete(b);
 							return new ResponseEntity<String>(HttpStatus.NO_CONTENT);
 						}			

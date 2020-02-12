@@ -83,7 +83,7 @@ public class Bill {
 	
 	@JsonProperty("attachment")
 	@OneToOne(optional = true, cascade=CascadeType.ALL)
-	@JoinColumn(name = "FileImageId", nullable = true)
+	@JoinColumn(name = "attachment", nullable = true)
 	private FileImage fileImage;
 	
 
