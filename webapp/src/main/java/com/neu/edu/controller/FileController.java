@@ -306,6 +306,17 @@ public class FileController {
 					{
 						if(listOfBills.contains(bill))
 						{
+							try
+							{
+								String abc = bill.getFileImage().getFileId();
+								
+							}
+							catch (Exception e) 
+							{
+								entity.addProperty("message", "The file does not exist for this bill");
+								return new ResponseEntity<String>(entity.toString(), HttpStatus.NOT_FOUND);
+							}
+							
 							//user.setPassword(null);
 							FileImage singleFile = fileRepository.findByfileId(fileId);
 							if(singleFile == null)
@@ -321,6 +332,7 @@ public class FileController {
 							return new ResponseEntity<String>(entity.toString(), HttpStatus.UNAUTHORIZED);
 
 						}			
+						
 						else
 						{
 							entity.addProperty("message", "The bill does not belong to particular user");
@@ -409,7 +421,18 @@ public class FileController {
 
 						}
 						if(listOfBills.contains(b))
-						{			
+						{		
+
+							try
+							{
+								String abc = b.getFileImage().getFileId();
+								
+							}
+							catch (Exception e) 
+							{
+								entity.addProperty("message", "The file does not exist for this bill");
+								return new ResponseEntity<String>(entity.toString(), HttpStatus.NOT_FOUND);
+							}
 							FileImage singleFile = fileRepository.findByfileId(fileId);
 							if(singleFile == null)
 							{
