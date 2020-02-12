@@ -1,7 +1,15 @@
 package com.neu.edu.controller;
 
+import org.springframework.util.StringUtils;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.security.MessageDigest;
 import java.text.SimpleDateFormat;
 import java.util.Base64;
 import java.util.Date;
@@ -56,6 +64,11 @@ public class FileController {
 	String pattern = "yyyy-MM-dd";
 	SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
 
+	String patterndf = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
+	SimpleDateFormat df = new SimpleDateFormat(patterndf);
+
+	
+	String checksum = null;
 	//private static final String USER_HOME=System.getProperty("user.home");
 
 	//Post a file for particular Bill for particular User
@@ -80,7 +93,7 @@ public class FileController {
 			// authorization = username:password
 			String [] userCredentials = credentials.split(":", 2);
 			String email = userCredentials[0];
-
+			
 			String password = userCredentials[1];
 
 			User user = userRepository.findByemail(email);
@@ -126,7 +139,7 @@ public class FileController {
 								return new ResponseEntity<String>(entity.toString(), HttpStatus.BAD_REQUEST);
 							}
 
-							if(!file.getContentType().contains("image/png") && !file.getContentType().contains("image/jpg") && !file.getContentType().contains("image/jpeg") && !file.getContentType().contains("image/pdf"))
+							if(!file.getContentType().contains("image/png") && !file.getContentType().contains("image/jpg") && !file.getContentType().contains("image/jpeg") && !file.getContentType().contains("application/pdf"))
 							{
 								entity.addProperty("message", "Incorrect File Format");
 								return new ResponseEntity<String>(entity.toString(), HttpStatus.BAD_REQUEST);
@@ -139,22 +152,37 @@ public class FileController {
 								return new ResponseEntity<String>(entity.toString(), HttpStatus.BAD_REQUEST);
 							}
 
-							
 							FileImage fileImage = new FileImage();
 							fileImage.setFileName(file.getOriginalFilename());
 							//System.out.println("File_Name is : "+file.getOriginalFilename());
 							String newGeneratedFile = generateFileName(file);
 							//System.out.println("photonewName : "+newGeneratedFile);
 							String filePath = uploadnewFile(file,newGeneratedFile);
-							fileImage.setUrl(filePath);                 
-
+							fileImage.setUrl(filePath);     
 							fileImage.setUploadDate(simpleDateFormat.format(new Date()).toString());
+							//Meta Data information
+							String fname = StringUtils.cleanPath(file.getOriginalFilename());
+							Path path = Paths.get(filePath);
+							BasicFileAttributes attributes = Files.readAttributes(path, BasicFileAttributes.class);
+							String creationtime = df.format(attributes.creationTime().toMillis());
+							String lastAccessTime = df.format(attributes.lastAccessTime().toMillis());
+							String lastModifiedTime = df.format(attributes.lastModifiedTime().toMillis());
+							
+							Long size = attributes.size();
+							//String contentType = Files.probeContentType(path);
+							fileImage.setContentType(file.getContentType());
+							fileImage.setSize(size);
+							fileImage.setCreationtime(creationtime);
+							fileImage.setLastAccessTime(lastAccessTime);
+							fileImage.setLastModifiedTime(lastModifiedTime);
+							fileImage.setMd5hash(checksum);
+							fileImage.setFileOwner(Files.getOwner(path).getName());
 							fileRepository.save(fileImage);
 							bill.setFileImage(fileImage);
 							billRepository.save(bill);
 							return new ResponseEntity<FileImage>(fileImage , HttpStatus.CREATED);
 						}	
-
+						
 						else
 						{
 							entity.addProperty("message", "The bill does not belong to particular user");
@@ -203,6 +231,16 @@ public class FileController {
 			FileOutputStream fos = new FileOutputStream(file);
 			fos.write(multipartFile.getBytes());
 			fos.close();
+		
+			//Use MD5 algorithm
+			MessageDigest md5Digest = MessageDigest.getInstance("MD5");
+			 
+			//Get the checksum
+			 checksum = getFileChecksum(md5Digest, file);
+			 
+			//see checksum
+			System.out.println(checksum);
+			
 		}
 		catch (Exception e) 
 		{
@@ -212,7 +250,6 @@ public class FileController {
 		return filePath;
 
 	}
-
 
 	//get a file for particular Bill for particular User
 	@GetMapping(value = "/v1/bill/{id}/file/{fileId}")
@@ -359,6 +396,7 @@ public class FileController {
 					return new ResponseEntity<String>(entity.toString(), HttpStatus.NOT_FOUND);
 				}
 
+				
 				if(billId != null )
 				{
 					if(listOfBills.size() > 0)
@@ -389,7 +427,8 @@ public class FileController {
 							}
 							entity.addProperty("message", "The file cannot be deleted as it does not belong to this particular bill");
 							return new ResponseEntity<String>(entity.toString(), HttpStatus.UNAUTHORIZED);
-						}			
+						}		
+						
 						else
 						{
 							entity.addProperty("message", "The bill does not belong to particular ");
@@ -422,5 +461,37 @@ public class FileController {
 	}
 
 
+	
+	private static String getFileChecksum(MessageDigest digest, File file) throws IOException
+	{
+	    //Get file input stream for reading the file content
+	    FileInputStream fis = new FileInputStream(file);
+	     
+	    //Create byte array to read data in chunks
+	    byte[] byteArray = new byte[1024];
+	    int bytesCount = 0; 
+	      
+	    //Read file data and update in message digest
+	    while ((bytesCount = fis.read(byteArray)) != -1) {
+	        digest.update(byteArray, 0, bytesCount);
+	    };
+	     
+	    //close the stream; We don't need it now.
+	    fis.close();
+	     
+	    //Get the hash's bytes
+	    byte[] bytes = digest.digest();
+	     
+	    //This bytes[] has bytes in decimal format;
+	    //Convert it to hexadecimal format
+	    StringBuilder sb = new StringBuilder();
+	    for(int i=0; i< bytes.length ;i++)
+	    {
+	        sb.append(Integer.toString((bytes[i] & 0xff) + 0x100, 16).substring(1));
+	    }
+	     
+	    //return complete hash
+	   return sb.toString();
+	}
 	
 }

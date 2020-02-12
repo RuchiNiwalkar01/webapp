@@ -34,6 +34,7 @@ build/
 *.jpeg
 *.png
 *.jpg
+*.pdf
 
 target/
 pom.xml.tag
