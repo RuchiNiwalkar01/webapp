@@ -56,6 +56,11 @@
 			<artifactId>spring-security-core</artifactId>
 		</dependency>
 		<dependency>
+		    <groupId>com.amazonaws</groupId>
+		    <artifactId>aws-java-sdk</artifactId>
+		    <version>1.11.729</version>
+        </dependency>
+		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
@@ -67,7 +72,20 @@
 			</exclusions>
 		</dependency>
 	</dependencies>
-
+  <profiles>
+        <profile>
+            <id>dev</id>
+            <properties>
+                <activatedProperties>dev</activatedProperties>
+            </properties>
+        </profile>
+         <profile>
+            <id>default</id>
+            <properties>
+                <activatedProperties>default</activatedProperties>
+            </properties>
+        </profile>
+    </profiles>
 	<build>
 		<plugins>
 			<plugin>
