@@ -190,7 +190,7 @@ public class FileControllerAWSBucket {
 					    	     metadata.setContentLength(file.getSize());
 					    	    // metadata.setContentMD5(md5);
 		                         PutObjectRequest p = new PutObjectRequest(this.bucketName , filePath , file.getInputStream(), metadata);
-		                         p.withCannedAcl(CannedAccessControlList.PublicRead);
+		                         p.withCannedAcl(CannedAccessControlList.Private);
 		                         s3Client.putObject(p);
 		                         new PutObjectResult();
 		                        
