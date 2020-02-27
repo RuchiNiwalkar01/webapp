@@ -14,6 +14,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -31,6 +32,11 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException.BadRequest;
 
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.DeleteObjectRequest;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.google.gson.JsonObject;
@@ -67,7 +73,8 @@ public class BillController {
 	String pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
 	SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
 
-	
+	@Value("${bucket.name}")
+	String bucketName;
     
 	//Post a bill by authenticating User
 	//201 created, 400 bad request, 401 for no auth or unauthorized
@@ -511,8 +518,21 @@ public class BillController {
 							if(b.getFileImage()!=null)
 							{
 								FileImage singleFile = fileRepository.findByfileId(b.getFileImage().getFileId());
-								File CurrentFile = new File(singleFile.getUrl());
-								CurrentFile.delete();
+								try {
+									  String fileUrl=singleFile.getUrl();
+									  String fileName=fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
+									  AmazonS3 s3Client = AmazonS3ClientBuilder.standard().withRegion(Regions.US_EAST_1).build();
+							          DeleteObjectRequest deleteAttach=new DeleteObjectRequest(this.bucketName,fileName);
+							          s3Client.deleteObject(deleteAttach);
+									  
+								  }
+								catch(AmazonServiceException e){
+									  e.printStackTrace();
+									  
+								  }
+							
+								//File CurrentFile = new File(singleFile.getUrl());
+								//CurrentFile.delete();
 								b.setFileImage(null);
 								fileRepository.delete(singleFile);
 								billRepository.delete(b);
