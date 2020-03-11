@@ -1,7 +1,7 @@
 #!/bin/bash
 cd /home/ubuntu
 sudo chown -R ubuntu:ubuntu /home/ubuntu/
-pid=$(ps aux | grep "java -jar" | grep "root" | awk '{print $2}')
+pid=$(ps aux | grep "java -jar")
 sudo kill -9 "$pid" 
 source /etc/profile
 sudo chmod +x /home/ubuntu/webapp-0.0.1-SNAPSHOT.jar
