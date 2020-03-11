@@ -6,7 +6,7 @@ files:
     destination: /home/ubuntu/
 
 hooks:
-  ApplicationStart:
+  AfterInstall:
    - location: ./afterInstall.sh
      timeout: 180
      runas: ubuntu
