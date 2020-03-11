@@ -1,4 +1,5 @@
 #!/bin/bash
+sudo apt update
 sudo apt install lsof -y
 cd /home/ubuntu
 sudo chown -R ubuntu:ubuntu /home/ubuntu/
