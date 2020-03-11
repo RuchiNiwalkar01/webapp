@@ -1,0 +1,12 @@
+version: 0.0
+os: linux
+
+files:
+  - source: home/circleci/project/webapp/target/webapp-0.0.1-SNAPSHOT.jar
+    destination: /home/ubuntu/
+
+hooks:
+  AfterInstall:
+   - location: ./afterInstall.sh
+     timeout: 180
+     runas: root

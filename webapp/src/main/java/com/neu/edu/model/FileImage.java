@@ -37,7 +37,14 @@ public class FileImage {
 	@Column(name="upload_date")	
 	private String uploadDate;
 	
-
+	@JsonIgnore
+	@Column(name="creationtime")	
+	private String creationtime;
+	
+	@JsonIgnore
+	@Column(name="lastAccessTime")	
+	private String lastAccessTime;
+	
 	@JsonIgnore
 	@Column(name="lastModifiedTime")	
 	private String lastModifiedTime;
@@ -49,7 +56,14 @@ public class FileImage {
 	@JsonIgnore
 	@Column(name="contentType")	
 	private String contentType;
-
+	
+	@JsonIgnore
+	@Column(name="md5hash")	
+	private String md5hash;
+	
+	@JsonIgnore
+	@Column(name="fileOwner")	
+	private String fileOwner;
 	
 	public String getFileName() {
 		return fileName;
@@ -84,6 +98,25 @@ public class FileImage {
 	public void setUploadDate(String uploadDate) {
 		this.uploadDate = uploadDate;
 	}
+	
+	
+	
+
+	public String getCreationtime() {
+		return creationtime;
+	}
+
+	public void setCreationtime(String creationtime) {
+		this.creationtime = creationtime;
+	}
+
+	public String getLastAccessTime() {
+		return lastAccessTime;
+	}
+
+	public void setLastAccessTime(String lastAccessTime) {
+		this.lastAccessTime = lastAccessTime;
+	}
 
 	public String getLastModifiedTime() {
 		return lastModifiedTime;
@@ -109,6 +142,23 @@ public class FileImage {
 		this.contentType = contentType;
 	}
 
+	public String getMd5hash() {
+		return md5hash;
+	}
+
+	public void setMd5hash(String md5hash) {
+		this.md5hash = md5hash;
+	}
+	
+	
+
+	public String getFileOwner() {
+		return fileOwner;
+	}
+
+	public void setFileOwner(String fileOwner) {
+		this.fileOwner = fileOwner;
+	}
 
 	public FileImage()
 	{
