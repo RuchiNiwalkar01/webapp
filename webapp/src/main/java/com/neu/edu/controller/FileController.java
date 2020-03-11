@@ -174,11 +174,11 @@ public class FileController {
 							//String contentType = Files.probeContentType(path);
 							fileImage.setContentType(file.getContentType());
 							fileImage.setSize(size);
-							//fileImage.setCreationtime(creationtime);
-							//fileImage.setLastAccessTime(lastAccessTime);
+							fileImage.setCreationtime(creationtime);
+							fileImage.setLastAccessTime(lastAccessTime);
 							fileImage.setLastModifiedTime(lastModifiedTime);
-							//fileImage.setMd5hash(checksum);
-							//fileImage.setFileOwner(Files.getOwner(path).getName());
+							fileImage.setMd5hash(checksum);
+							fileImage.setFileOwner(Files.getOwner(path).getName());
 							fileRepository.save(fileImage);
 							bill.setFileImage(fileImage);
 							billRepository.save(bill);

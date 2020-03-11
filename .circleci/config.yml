@@ -4,45 +4,14 @@ jobs:
   pr_check:
     docker:
       - image : circleci/openjdk:11.0.5-jdk-stretch
-      - image: circleci/mysql:8.0.4
-        environment:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: test
-          MYSQL_USER: root123
-          MYSQL_PASSWORD: root123
     steps:
       - checkout
       - run:
           name: Testing circleci
           command: echo "Hello World! Welcome circleci"
-      - run:
-      # Our primary container isn't MYSQL so run a sleep command until it's ready.
-          name: Waiting for MySQL to be ready
-          command: |
-            for i in `seq 1 20`;
-            do
-              nc -z 127.0.0.1 3306 && echo Success && exit 0
-              echo -n .
-              sleep 1
-            done
-            echo Failed waiting for MySQL && exit 1
-      - run:
-          name: Install MySQL CLI
-          command: |
-            sudo apt-get update
-            sudo apt-get install default-mysql-client
-      - run:
-          name: Step into webApplication
-          command: |
-             pwd
-             cd webapp
-             ls -al
-             sudo apt-get update
-             sudo apt install maven
-             mvn clean install
   build:
     docker:
-      - image : circleci/openjdk:11.0.5-jdk-stretch
+      - image: circleci/openjdk:11.0.5-jdk-stretch
       - image: circleci/mysql:8.0.4
         environment:
           MYSQL_ROOT_PASSWORD: root
@@ -71,7 +40,19 @@ jobs:
             sudo apt-get update
             sudo apt-get install default-mysql-client
       - run:
-          name: Step into webApplication
+          name: Install packages
+          command: |
+            sudo apt-get update || sudo apt-get update
+            sudo apt-get install python3
+            python3 --version
+            sudo apt install python3-pip
+            pip3 --version
+      - run:
+          name: Install AWS-CLI
+          command: |
+            sudo pip3 install awscli
+      - run:
+          name: Building Webapp artifact
           command: |
              pwd
              cd webapp
@@ -79,8 +60,31 @@ jobs:
              sudo apt-get update
              sudo apt install maven
              mvn clean install
-             
-
+      - run:
+          name: Zip Artifact
+          command: |
+            pwd
+            ls -al
+            chmod +x ./afterInstall.sh
+            mkdir -p codedeploy_artifact
+            zip -r csye6225-web-app-${CIRCLE_BUILD_NUM}.zip ~/project/webapp/target/webapp-0.0.1-SNAPSHOT.jar *.sh *.yml
+            mv csye6225-web-app-${CIRCLE_BUILD_NUM}.zip codedeploy_artifact/
+            cd codedeploy_artifact
+            ls -al
+            pwd
+            cd .. 
+            pwd
+      - run:
+          name: Upload Artifact to S3
+          command: |
+            echo "uploading artifact"
+            pwd
+            cd codedeploy_artifact
+            aws s3 cp csye6225-web-app-${CIRCLE_BUILD_NUM}.zip s3://${CODE_DEPLOY_BUCKET}
+      - run:
+          name: Make CodeDeploy API call
+          command: |
+            aws deploy create-deployment --application-name csye6225-webapp --deployment-config-name CodeDeployDefault.AllAtOnce --deployment-group-name csye6225-webapp-deployment --s3-location bucket=${CODE_DEPLOY_BUCKET},bundleType=zip,key=csye6225-web-app-${CIRCLE_BUILD_NUM}.zip          
 workflows:
   version: 2
   pr-check-workflow: 

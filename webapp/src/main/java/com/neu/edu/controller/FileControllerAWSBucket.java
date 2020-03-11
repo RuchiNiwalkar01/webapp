@@ -178,7 +178,7 @@ public class FileControllerAWSBucket {
   							//System.out.println("File_Name is : "+file.getOriginalFilename());
   							//String newGeneratedFile = generateFileName(file);
   							//System.out.println("photonewName : "+newGeneratedFile);
-  							String filePath = uploadnewFile(file,file.getOriginalFilename());
+  							String filePath = uploadnewFile(file.getOriginalFilename());
   							String fileUrl = null;
   						     try {
 						    	 
@@ -271,7 +271,7 @@ public class FileControllerAWSBucket {
 //  		return uploadDir + file.getOriginalFilename().replace(" ", "_");
   		 return new Date().getTime() + "-" + file.getOriginalFilename().replace(" ", "_");
   	}
-  	public String uploadnewFile(MultipartFile multipartFile,String filePath) throws Exception {
+  	public String uploadnewFile(String filePath) throws Exception {
 
   		try
   		{
@@ -280,19 +280,19 @@ public class FileControllerAWSBucket {
   			//String filePath = USER_HOME+"/Desktop/ImagesFolder";
   			//String fileName = file.getOriginalFilename();
   			//String NewPath = filePath + fileName;
-  			File file = new File(filePath);
-  			FileOutputStream fos = new FileOutputStream(file);
-  			fos.write(multipartFile.getBytes());
-  			fos.close();
-  		
-  			//Use MD5 algorithm
-  			MessageDigest md5Digest = MessageDigest.getInstance("MD5");
-  			 
-  			//Get the checksum
-  			 checksum = getFileChecksum(md5Digest, file);
-  			 
-  			//see checksum
-  			System.out.println(checksum);
+//  			File file = new File(filePath);
+//  			FileOutputStream fos = new FileOutputStream(file);
+//  			fos.write(multipartFile.getBytes());
+//  			fos.close();
+//  		
+//  			//Use MD5 algorithm
+//  			MessageDigest md5Digest = MessageDigest.getInstance("MD5");
+//  			 
+//  			//Get the checksum
+//  			 checksum = getFileChecksum(md5Digest, file);
+//  			 
+//  			//see checksum
+//  			System.out.println(checksum);
   			
   		}
   		catch (Exception e) 
