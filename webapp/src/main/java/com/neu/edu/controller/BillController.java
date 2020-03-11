@@ -181,7 +181,7 @@ public class BillController {
 
 	//Get all bill by Specific User
 	//200 for success, 401 no authorization
-	@GetMapping(value = "/v1/bills")
+	@GetMapping(value = "/v2/bills")
 	public ResponseEntity<?> getAllBillsByUserId(HttpServletRequest request, HttpServletResponse response)
 	{
 		String authorization = request.getHeader("Authorization");
