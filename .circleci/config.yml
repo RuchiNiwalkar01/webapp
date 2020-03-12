@@ -84,7 +84,7 @@ jobs:
       - run:
           name: Make CodeDeploy API call
           command: |
-            aws deploy create-deployment --application-name csye6225-webapp --deployment-config-name CodeDeployDefault.AllAtOnce --deployment-group-name csye6225-webapp-deployment --s3-location bucket=${CODE_DEPLOY_BUCKET},bundleType=zip,key=csye6225-web-app-${CIRCLE_BUILD_NUM}.zip          
+            aws deploy create-deployment --application-name ${Application_Name} --deployment-config-name CodeDeployDefault.AllAtOnce --deployment-group-name ${Deployment_Group_Name} --s3-location bucket=${CODE_DEPLOY_BUCKET},bundleType=zip,key=csye6225-web-app-${CIRCLE_BUILD_NUM}.zip          
 workflows:
   version: 2
   pr-check-workflow: 
