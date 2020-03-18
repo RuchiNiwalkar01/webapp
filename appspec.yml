@@ -4,9 +4,15 @@ os: linux
 files:
   - source: home/circleci/project/webapp/target/webapp-0.0.1-SNAPSHOT.jar
     destination: /home/ubuntu/
+  - source: ./cloudwatch_config.json
+    destination: /home/ubuntu/
 
 hooks:
   AfterInstall:
    - location: ./afterInstall.sh
+     timeout: 180
+     runas: ubuntu
+  ApplicationStart:
+   - location: ./applicationStart.sh
      timeout: 180
      runas: ubuntu
