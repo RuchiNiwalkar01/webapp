@@ -96,7 +96,7 @@ jobs:
           command: |
             pwd
             ls -al
-            chmod +x ./afterInstall.sh
+            chmod +x ./applicationStart.sh
             mkdir -p codedeploy_artifact
             zip -r csye6225-web-app-${CIRCLE_BUILD_NUM}.zip ~/project/webapp/target/webapp-0.0.1-SNAPSHOT.jar *.sh *.yml *.json
             mv csye6225-web-app-${CIRCLE_BUILD_NUM}.zip codedeploy_artifact/
