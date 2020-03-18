@@ -13,6 +13,8 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -49,6 +51,7 @@ import com.neu.edu.repository.BillRepository;
 import com.neu.edu.repository.BillRepositoryfindaSpecificBill;
 import com.neu.edu.repository.FileRepository;
 import com.neu.edu.repository.UserRepository;
+import com.timgroup.statsd.StatsDClient;
 
 
 @RestController
@@ -69,7 +72,12 @@ public class BillController {
 	@Autowired
 	FileRepository fileRepository;
 	
-	
+
+	@Autowired
+	StatsDClient statsDClient;
+
+    final static Logger logger = LoggerFactory.getLogger(BillController.class);
+    
 	String pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
 	SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
 
@@ -81,8 +89,9 @@ public class BillController {
 	@PostMapping(value= "/v1/bill")
 	public ResponseEntity<?> postBillByUserId(@Validated @RequestBody(required = false) Bill bill, HttpServletRequest request, HttpServletResponse response)
 	{
-		
-		
+		statsDClient.incrementCounter("bill.post");
+		logger.info("Inside Post Bill Api");
+		long start = System.currentTimeMillis();
 		String authorization = request.getHeader("Authorization");
 		JsonObject entity = new JsonObject();
 		if(authorization != null && authorization.toLowerCase().startsWith("basic"))
@@ -101,10 +110,16 @@ public class BillController {
 			if(user == null)
 			{
 				entity.addProperty("message", "User does not exist. Please enter correct Username or Password");
+				long end = System.currentTimeMillis();
+				statsDClient.recordExecutionTime("postBillApiTime", (start-end));
+				logger.error("User does not exist. ");
 			}
 			else if(user != null && !bCryptPasswordEncoder.matches(password, user.getPassword()))
 			{
 				entity.addProperty("message", "The Password is Invalid");
+				long end = System.currentTimeMillis();
+				statsDClient.recordExecutionTime("postBillApiTime", (start-end));
+				logger.error("The Password is Invalid");
 				return new ResponseEntity<String>(entity.toString() , HttpStatus.UNAUTHORIZED);
 			}
 			else
@@ -112,6 +127,9 @@ public class BillController {
 				if(bill==null)
 				{
 					entity.addProperty("message", "The Request Body cannot be null");
+					long end = System.currentTimeMillis();
+					statsDClient.recordExecutionTime("postBillApiTime", (start-end));
+					logger.error("The Request Body cannot be null");
 					return new ResponseEntity<String>(entity.toString() , HttpStatus.BAD_REQUEST);
 				}
 				if( (bill.getVendor()!=null && bill.getVendor().trim().length() >0) && bill.getBilldate()!=null  && bill.getDuedate()!=null && 
@@ -136,8 +154,14 @@ public class BillController {
 								b.setUpdated_ts(dateFormat.toString());
 								b.setPaymentStatus(bill.getPaymentStatus());
 								b.setOwner_id(user.getId());
+								long startbilldb = System.currentTimeMillis();
 								billRepository.save(b);
 								b.setUser(null);
+								long endbilldb = System.currentTimeMillis();
+								statsDClient.recordExecutionTime("PostBilldb", (startbilldb-endbilldb));
+								long end = System.currentTimeMillis();
+								statsDClient.recordExecutionTime("postBillApiTime", (start-end));
+								logger.info("Bill Successfully Created in time : "+(start-end));
 								return new ResponseEntity<Bill>(b , HttpStatus.CREATED);
 							}
 							else
@@ -173,7 +197,10 @@ public class BillController {
 
 		}
 
-		entity.addProperty("message", "Invalid. Unable to Authenticate");	
+		entity.addProperty("message", "Invalid. Unable to Authenticate");
+		long end = System.currentTimeMillis();
+		statsDClient.recordExecutionTime("postBillApiTime", (start-end));
+		logger.error("Invalid. Unable to Authenticate");
 		return new ResponseEntity<String>(entity.toString() , HttpStatus.UNAUTHORIZED);
 
 	}
@@ -181,9 +208,12 @@ public class BillController {
 
 	//Get all bill by Specific User
 	//200 for success, 401 no authorization
-	@GetMapping(value = "/v2/bills")
+	@GetMapping(value = "/v1/bills")
 	public ResponseEntity<?> getAllBillsByUserId(HttpServletRequest request, HttpServletResponse response)
 	{
+		statsDClient.incrementCounter("bill.get");
+		logger.info("Inside Get Bill Api");
+		long start = System.currentTimeMillis();
 		String authorization = request.getHeader("Authorization");
 		JsonObject entity = new JsonObject();
 		if(authorization != null && authorization.toLowerCase().startsWith("basic"))
@@ -203,10 +233,16 @@ public class BillController {
 			if(user == null)
 			{
 				entity.addProperty("message", "User does not exist. Please enter correct Username or Password");
+				long end = System.currentTimeMillis();
+				statsDClient.recordExecutionTime("getBillApiTime", (start-end));
+				logger.error("User does not exist. ");
 			}
 			else if(user != null && !bCryptPasswordEncoder.matches(password, user.getPassword()))
 			{
 				entity.addProperty("message", "The Password is Invalid");
+				long end = System.currentTimeMillis();
+				statsDClient.recordExecutionTime("getBillApiTime", (start-end));
+				logger.error("The Password is Invalid");
 				return new ResponseEntity<String>(entity.toString() , HttpStatus.UNAUTHORIZED);
 			}
 			else
@@ -216,15 +252,25 @@ public class BillController {
 				if(listOfBills.size() ==0)
 				{
 					entity.addProperty("message", "The bills do not exist");
+					long end = System.currentTimeMillis();
+					statsDClient.recordExecutionTime("getBillApiTime", (start-end));
+					logger.error("The bills do not exist ");
 					return new ResponseEntity<String>(entity.toString() , HttpStatus.NOT_FOUND);
 				}
+				entity.addProperty("message", "The bills Found");
+				long end = System.currentTimeMillis();
+				statsDClient.recordExecutionTime("getBillApiTime", (start-end));
+				logger.info("The bills found i time : "+(start-end));
 				return new ResponseEntity<List<Bill>>(listOfBills , HttpStatus.OK);
 			}					
 
 			return new ResponseEntity<String>(entity.toString() , HttpStatus.UNAUTHORIZED);
 		}
 
-		entity.addProperty("message", "Invalid. Unable to Authenticate");	
+		entity.addProperty("message", "Invalid. Unable to Authenticate");
+		long end = System.currentTimeMillis();
+		statsDClient.recordExecutionTime("getBillApiTime", (start-end));
+		logger.error("Unable to Authenticate");
 		return new ResponseEntity<String>(entity.toString() , HttpStatus.UNAUTHORIZED);
 	}
 	
@@ -233,6 +279,9 @@ public class BillController {
 	@GetMapping(value = "/v1/bill/{id}")
 	public ResponseEntity<?> getSingleBillbyId(HttpServletRequest request, HttpServletResponse response, @PathVariable(value="id" ) String billId)
 	{
+		statsDClient.incrementCounter("bill.getById");
+		logger.info("Inside Get Bill By Id Api");
+		long start = System.currentTimeMillis();
 		
 		String authorization = request.getHeader("Authorization");
 		JsonObject entity = new JsonObject();
@@ -253,10 +302,16 @@ public class BillController {
 			if(user == null)
 			{
 				entity.addProperty("message", "User does not exist. Please enter correct Username or Password");
+				long end = System.currentTimeMillis();
+				statsDClient.recordExecutionTime("getBillByIdApiTime", (start-end));
+				logger.error("User does not exist. ");
 			}
 			else if(user != null && !bCryptPasswordEncoder.matches(password, user.getPassword()))
 			{
 				entity.addProperty("message", "The Password is Invalid");
+				long end = System.currentTimeMillis();
+				statsDClient.recordExecutionTime("getBillByIdApiTime", (start-end));
+				logger.error("The Password is Invalid");
 				return new ResponseEntity<String>(entity.toString() , HttpStatus.UNAUTHORIZED);
 			}
 			else
@@ -271,6 +326,9 @@ public class BillController {
 		            {
 
 						entity.addProperty("message", "The bill does not exist.");
+						long end = System.currentTimeMillis();
+						statsDClient.recordExecutionTime("getBillByIdApiTime", (start-end));
+						logger.error("The bill does not exist");
 						return new ResponseEntity<String>(entity.toString(), HttpStatus.NOT_FOUND);
 		            }
 		            
@@ -285,23 +343,35 @@ public class BillController {
 						if(listOfBills.contains(bill))
 						{
 							user.setPassword(null);
+							long end = System.currentTimeMillis();
+							statsDClient.recordExecutionTime("getBillByIdApiTime", (start-end));
+							logger.info("The bill is found in time :"+(start-end));
 							return new ResponseEntity<Bill>(bill , HttpStatus.OK);
 						}			
 						else
 						{
 							entity.addProperty("message", "The bill does not belong to particular user");
+							long end = System.currentTimeMillis();
+							statsDClient.recordExecutionTime("getBillByIdApiTime", (start-end));
+							logger.error("The bill does not belong to particular user");
 							return new ResponseEntity<String>(entity.toString(), HttpStatus.UNAUTHORIZED);
 						}
 					}
 					else
 					{
 						entity.addProperty("message", "The bill does not exist.");
+						long end = System.currentTimeMillis();
+						statsDClient.recordExecutionTime("getBillByIdApiTime", (start-end));
+						logger.error("The bill does not exist");
 						return new ResponseEntity<String>(entity.toString(), HttpStatus.NOT_FOUND);
 					}
 				}
 				else
 				{
 					entity.addProperty("message", "The bill does not exist.");
+					long end = System.currentTimeMillis();
+					statsDClient.recordExecutionTime("getBillByIdApiTime", (start-end));
+					logger.error("The bill does not exist");
 					return new ResponseEntity<String>(entity.toString(), HttpStatus.NOT_FOUND);
 				}
 				
@@ -312,6 +382,9 @@ public class BillController {
 		}
 
 		entity.addProperty("message", "Invalid. Unable to Authenticate");	
+		long end = System.currentTimeMillis();
+		statsDClient.recordExecutionTime("getBillByIdApiTime", (start-end));
+		logger.error("Unable to Authenticate");
 		return new ResponseEntity<String>(entity.toString() , HttpStatus.UNAUTHORIZED);
 	}
 	
@@ -321,6 +394,10 @@ public class BillController {
 	@PutMapping(value = "/v1/bill/{id}")
 	public ResponseEntity<?> updateBillById(HttpServletRequest request, HttpServletResponse response, @RequestBody(required = false) Bill bill, @PathVariable(required = true, value = "id") @NotBlank @NotNull String billId )
 	{
+		statsDClient.incrementCounter("bill.put");
+		logger.info("Inside Update bill Api");
+		long start = System.currentTimeMillis();
+		
 		String authorization = request.getHeader("Authorization");
 		JsonObject entity = new JsonObject();
 		if(authorization != null && authorization.toLowerCase().startsWith("basic"))
@@ -340,10 +417,16 @@ public class BillController {
 			if(user == null)
 			{
 				entity.addProperty("message", "User does not exist. Please enter correct Username or Password");
+				long end = System.currentTimeMillis();
+				statsDClient.recordExecutionTime("PutBillApiTime", (start-end));
+				logger.error("User does not exist. ");
 			}
 			else if(user != null && !bCryptPasswordEncoder.matches(password, user.getPassword()))
 			{
 				entity.addProperty("message", "The Password is Invalid");
+				long end = System.currentTimeMillis();
+				statsDClient.recordExecutionTime("PutBillApiTime", (start-end));
+				logger.error("The Password is Invalid");
 				return new ResponseEntity<String>(entity.toString() ,HttpStatus.UNAUTHORIZED);
 			}
 			else
@@ -351,6 +434,9 @@ public class BillController {
 				if(bill==null)
 				{
 					entity.addProperty("message", "The Request Body cannot be null");
+					long end = System.currentTimeMillis();
+					statsDClient.recordExecutionTime("PutBillApiTime", (start-end));
+					logger.error("The Request Body cannot be null");
 					return new ResponseEntity<String>(entity.toString() , HttpStatus.BAD_REQUEST);
 				}
 				
@@ -365,6 +451,9 @@ public class BillController {
 		            {
 
 						entity.addProperty("message", "The bill does not exist or bill Id is incorrect.");
+						long end = System.currentTimeMillis();
+						statsDClient.recordExecutionTime("PutBillApiTime", (start-end));
+						logger.error("The bill does not exist or bill Id is incorrect.l");
 						return new ResponseEntity<String>(entity.toString(), HttpStatus.NOT_FOUND);
 		            }
 		            
@@ -396,8 +485,14 @@ public class BillController {
 											b.setUpdated_ts(dateFormat.toString());
 											b.setPaymentStatus(bill.getPaymentStatus());
 											//b.setOwner_id(user.getId());
+											long startbilldb = System.currentTimeMillis();
 											billRepository.save(b);
 											user.setPassword(null);
+											long endbilldb = System.currentTimeMillis();
+											statsDClient.recordExecutionTime("PutBilldb", (startbilldb-endbilldb));
+											long end = System.currentTimeMillis();
+											statsDClient.recordExecutionTime("PutBillApiTime", (start-end));
+											logger.info("The bill is updated in time : "+(start-end));
 											return new ResponseEntity<Bill>(b , HttpStatus.OK);
 											
 										}		
@@ -453,6 +548,9 @@ public class BillController {
 		}
 
 		entity.addProperty("message", "Invalid. Unable to Authenticate");	
+		long end = System.currentTimeMillis();
+		statsDClient.recordExecutionTime("PutBillApiTime", (start-end));
+		logger.info(" Unable to Authenticate");
 		return new ResponseEntity<String>(entity.toString() , HttpStatus.UNAUTHORIZED);
 	}
 	
@@ -461,6 +559,10 @@ public class BillController {
 	@DeleteMapping(value = "/v1/bill/{id}")
 	public ResponseEntity<?> deleteBillById(HttpServletRequest request, HttpServletResponse response, @PathVariable(value = "id") @NotBlank @NotNull String billId )
 	{
+		statsDClient.incrementCounter("bill.delete");
+		logger.info("Inside delete Api");
+		long start = System.currentTimeMillis();
+		
 		String authorization = request.getHeader("Authorization");
 		JsonObject entity = new JsonObject();
 		if(authorization != null && authorization.toLowerCase().startsWith("basic"))
@@ -480,10 +582,16 @@ public class BillController {
 			if(user == null)
 			{
 				entity.addProperty("message", "User does not exist. Please enter correct Username or Password");
+				long end = System.currentTimeMillis();
+				statsDClient.recordExecutionTime("DeleteBillApiTime", (start-end));
+				logger.error("User does not exist. ");
 			}
 			else if(user != null && !bCryptPasswordEncoder.matches(password, user.getPassword()))
 			{
 				entity.addProperty("message", "The Password is Invalid");
+				long end = System.currentTimeMillis();
+				statsDClient.recordExecutionTime("DeleteBillApiTime", (start-end));
+				logger.error("The Password is Invalid");
 				return new ResponseEntity<String>(entity.toString() , HttpStatus.UNAUTHORIZED);
 			}
 			else
@@ -499,6 +607,9 @@ public class BillController {
 		            {
 
 						entity.addProperty("message", "The bill does not exist or bill Id is incorrect.");
+						long end = System.currentTimeMillis();
+						statsDClient.recordExecutionTime("DeleteBillApiTime", (start-end));
+						logger.error("The bill does not exist or bill Id is incorrect.");
 						return new ResponseEntity<String>(entity.toString(), HttpStatus.NOT_FOUND);
 		            }
 		            
@@ -510,6 +621,9 @@ public class BillController {
 						if(b==null)
 						{
 							entity.addProperty("message", "The bill does not exist.");
+							long end = System.currentTimeMillis();
+							statsDClient.recordExecutionTime("DeleteBillApiTime", (start-end));
+							logger.error("The bill does not exist ");
 							return new ResponseEntity<String>(entity.toString(), HttpStatus.NOT_FOUND);
 							
 						}
@@ -534,22 +648,40 @@ public class BillController {
 								//File CurrentFile = new File(singleFile.getUrl());
 								//CurrentFile.delete();
 								b.setFileImage(null);
+								long startbilldb = System.currentTimeMillis();
 								fileRepository.delete(singleFile);
 								billRepository.delete(b);
+								long endbilldb = System.currentTimeMillis();
+								statsDClient.recordExecutionTime("DeleteBillApiTime", (startbilldb-endbilldb));
+								long end = System.currentTimeMillis();
+								statsDClient.recordExecutionTime("DeleteBillApiTime", (start-end));
+								logger.info("Deleted bill successfully in time : "+(start-end));
 								return new ResponseEntity<String>(HttpStatus.NO_CONTENT);
 							}
+							long startbilldb = System.currentTimeMillis();
 							billRepository.delete(b);
+							long endbilldb = System.currentTimeMillis();
+							statsDClient.recordExecutionTime("DeleteBillApiTime", (startbilldb-endbilldb));
+							long end = System.currentTimeMillis();
+							statsDClient.recordExecutionTime("DeleteBillApiTime", (start-end));
+							logger.info("Deleted bill successfully in time : "+(start-end));
 							return new ResponseEntity<String>(HttpStatus.NO_CONTENT);
 						}			
 						else
 						{
 							entity.addProperty("message", "The bill does not belong to particular ");
+							long end = System.currentTimeMillis();
+							statsDClient.recordExecutionTime("DeleteBillApiTime", (start-end));
+							logger.error("The bill does not belong to particular ");
 							return new ResponseEntity<String>(entity.toString(), HttpStatus.UNAUTHORIZED);
 						}
 					}
 					else
 					{
 						entity.addProperty("message", "The bill does not exist.");
+						long end = System.currentTimeMillis();
+						statsDClient.recordExecutionTime("DeleteBillApiTime", (start-end));
+						logger.error("The bill does not exist ");
 						return new ResponseEntity<String>(entity.toString(), HttpStatus.NOT_FOUND);
 					}
 				
@@ -558,6 +690,9 @@ public class BillController {
 				else
 				{
 					entity.addProperty("message", "The bill is null.");
+					long end = System.currentTimeMillis();
+					statsDClient.recordExecutionTime("DeleteBillApiTime", (start-end));
+					logger.error("The bill is null ");
 					return new ResponseEntity<String>(entity.toString(), HttpStatus.BAD_REQUEST);
 					
 				}
@@ -567,7 +702,10 @@ public class BillController {
 			return new ResponseEntity<String>(entity.toString() , HttpStatus.UNAUTHORIZED);
 		}
 
-		entity.addProperty("message", "Invalid. Unable to Authenticate");	
+		entity.addProperty("message", "Invalid. Unable to Authenticate");
+		long end = System.currentTimeMillis();
+		statsDClient.recordExecutionTime("DeleteBillApiTime", (start-end));
+		logger.error("Unable to Authenticate");
 		return new ResponseEntity<String>(entity.toString() , HttpStatus.UNAUTHORIZED);
 	}
 
