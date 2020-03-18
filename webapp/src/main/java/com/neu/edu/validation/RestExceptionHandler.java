@@ -57,6 +57,7 @@ public class RestExceptionHandler{
 	    	
 	        if (e.getMessage().contains("Enum")) 
 	        {
+	        	statsDClient.incrementCounter("bill.post");
 	        	long start = System.currentTimeMillis();
 	        	entity.addProperty("message", "Payment_status field should be in [ paid, due, past_due, no_payment_required ]");
 	        	long end = System.currentTimeMillis();
