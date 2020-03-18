@@ -133,14 +133,14 @@ public class FileControllerAWSBucket {
   			{
   				entity.addProperty("message", "User does not exist. Please enter correct Username or Password");
   				long end = System.currentTimeMillis();
-				statsDClient.recordExecutionTime("postFileApiTime", (start-end));
+				statsDClient.recordExecutionTime("postFileApiTime", (end-start));
   				logger.error("User does not exist. ");
   			}
   			else if(user != null && !bCryptPasswordEncoder.matches(password, user.getPassword()))
   			{
   				entity.addProperty("message", "The Password is Invalid");
   				long end = System.currentTimeMillis();
-				statsDClient.recordExecutionTime("postFileApiTime", (start-end));
+				statsDClient.recordExecutionTime("postFileApiTime", (end-start));
   				logger.error("The Password is Invalid");
   				return new ResponseEntity<String>(entity.toString() , HttpStatus.UNAUTHORIZED);
   			}
@@ -157,7 +157,7 @@ public class FileControllerAWSBucket {
 
   					entity.addProperty("message", "The bill does not exist.");
   					long end = System.currentTimeMillis();
-  					statsDClient.recordExecutionTime("postFileApiTime", (start-end));
+  					statsDClient.recordExecutionTime("postFileApiTime", (end-start));
   					logger.error("The bill does not exist.");
   					return new ResponseEntity<String>(entity.toString(), HttpStatus.NOT_FOUND);
   				}
@@ -178,7 +178,7 @@ public class FileControllerAWSBucket {
   							{
   								entity.addProperty("message", "Please select a file");
   								long end = System.currentTimeMillis();
-  								statsDClient.recordExecutionTime("postFileApiTime", (start-end));
+  								statsDClient.recordExecutionTime("postFileApiTime", (end-start));
   								logger.error("Please select a file");
   								return new ResponseEntity<String>(entity.toString(), HttpStatus.BAD_REQUEST);
   							}
@@ -187,7 +187,7 @@ public class FileControllerAWSBucket {
   							{
   								entity.addProperty("message", "Incorrect File Format");
   								long end = System.currentTimeMillis();
-  								statsDClient.recordExecutionTime("postFileApiTime", (start-end));
+  								statsDClient.recordExecutionTime("postFileApiTime", (end-start));
   								logger.error("Incorrect File Format");
   								return new ResponseEntity<String>(entity.toString(), HttpStatus.BAD_REQUEST);
   							}
@@ -197,7 +197,7 @@ public class FileControllerAWSBucket {
   								
   								entity.addProperty("message", "File already exists for particular bill");
   								long end = System.currentTimeMillis();
-  								statsDClient.recordExecutionTime("postFileApiTime", (start-end));
+  								statsDClient.recordExecutionTime("postFileApiTime", (end-start));
   								logger.error("File already exists for particular bill");
   								return new ResponseEntity<String>(entity.toString(), HttpStatus.BAD_REQUEST);
   							}
@@ -214,6 +214,7 @@ public class FileControllerAWSBucket {
 					    	     AmazonS3 s3Client = AmazonS3ClientBuilder.standard().withRegion(Regions.US_EAST_1).build();
 					    	     fileUrl = endPointUrl + "/" + bucketName + "/" + filePath;
 					    	   //  String md5 = new String(org.apache.commons.codec.binary.Base64.encodeBase64(DigestUtils.md5(fileUrl.getBytes())));
+					    	     long startAWSPost = System.currentTimeMillis();
 					    	     ObjectMetadata metadata = new ObjectMetadata();
 					    	     metadata.setContentType(file.getContentType());
 					    	     metadata.setContentLength(file.getSize());
@@ -222,7 +223,8 @@ public class FileControllerAWSBucket {
 		                         p.withCannedAcl(CannedAccessControlList.Private);
 		                         s3Client.putObject(p);
 		                         new PutObjectResult();
-		                        
+		                         long endAWSPost = System.currentTimeMillis();
+		                         statsDClient.recordExecutionTime("PostAWSFileS3", (endAWSPost-startAWSPost));
 		                         ObjectMetadata obj = s3Client.getObjectMetadata(this.bucketName,filePath);
 		                       //  fileImage.setMd5hash(obj.getContentMD5());
 		                         fileImage.setSize(obj.getContentLength());
@@ -264,10 +266,10 @@ public class FileControllerAWSBucket {
   							bill.setFileImage(fileImage);
   							billRepository.save(bill);
   							long endfiledb = System.currentTimeMillis();
-  							statsDClient.recordExecutionTime("DbPostFileApiTime", (startfiledb-endfiledb));
+  							statsDClient.recordExecutionTime("DbPostFileApiTime", (endfiledb-startfiledb));
   							long end = System.currentTimeMillis();
-  							statsDClient.recordExecutionTime("postFileApiTime", (start-end));
-  							logger.info("File uploaded in time : "+(start-end));
+  							statsDClient.recordExecutionTime("postFileApiTime", (end-start));
+  							logger.info("File uploaded in time : "+(end-start));
   							return new ResponseEntity<FileImage>(fileImage , HttpStatus.CREATED);
   						}	
   						
@@ -275,7 +277,7 @@ public class FileControllerAWSBucket {
   						{
   							entity.addProperty("message", "The bill does not belong to particular user");
   							long end = System.currentTimeMillis();
-  							statsDClient.recordExecutionTime("postFileApiTime", (start-end));
+  							statsDClient.recordExecutionTime("postFileApiTime", (end-start));
   							logger.error("The bill does not belong to particular user");
   							return new ResponseEntity<String>(entity.toString(), HttpStatus.UNAUTHORIZED);
   						}
@@ -284,7 +286,7 @@ public class FileControllerAWSBucket {
   					{
   						entity.addProperty("message", "The bill does not exist.");
   						long end = System.currentTimeMillis();
-  						statsDClient.recordExecutionTime("postFileApiTime", (start-end));
+  						statsDClient.recordExecutionTime("postFileApiTime", (end-start));
   						logger.error("The bill does not exist.");
   						return new ResponseEntity<String>(entity.toString(), HttpStatus.NOT_FOUND);
   					}
@@ -293,7 +295,7 @@ public class FileControllerAWSBucket {
   				{
   					entity.addProperty("message", "The bill does not exist.");
   					long end = System.currentTimeMillis();
-  					statsDClient.recordExecutionTime("postFileApiTime", (start-end));
+  					statsDClient.recordExecutionTime("postFileApiTime", (end-start));
   					logger.error("The bill does not exist.");
   					return new ResponseEntity<String>(entity.toString(), HttpStatus.NOT_FOUND);
   				}
@@ -306,7 +308,7 @@ public class FileControllerAWSBucket {
 
   		entity.addProperty("message", "Invalid. Unable to Authenticate");	
   		long end = System.currentTimeMillis();
-		statsDClient.recordExecutionTime("postFileApiTime", (start-end));
+		statsDClient.recordExecutionTime("postFileApiTime", (end-start));
   		logger.error("Unable to Authenticate");
   		return new ResponseEntity<String>(entity.toString() , HttpStatus.UNAUTHORIZED);
   	}
@@ -380,14 +382,14 @@ public class FileControllerAWSBucket {
   			{
   				entity.addProperty("message", "User does not exist. Please enter correct Username or Password");
   				long end = System.currentTimeMillis();
-  				statsDClient.recordExecutionTime("getFileApiTime", (start-end));
+  				statsDClient.recordExecutionTime("getFileApiTime", (end-start));
   				logger.error("User does not exist. ");
   			}
   			else if(user != null && !bCryptPasswordEncoder.matches(password, user.getPassword()))
   			{
   				entity.addProperty("message", "The Password is Invalid");
   				long end = System.currentTimeMillis();
-  				statsDClient.recordExecutionTime("getFileApiTime", (start-end));
+  				statsDClient.recordExecutionTime("getFileApiTime", (end-start));
   				logger.error("The Password is Invalid");
   				return new ResponseEntity<String>(entity.toString() , HttpStatus.UNAUTHORIZED);
   			}
@@ -425,7 +427,7 @@ public class FileControllerAWSBucket {
   							{
   								entity.addProperty("message", "The file does not exist for this bill");
   								long end = System.currentTimeMillis();
-  				  				statsDClient.recordExecutionTime("getFileApiTime", (start-end));
+  				  				statsDClient.recordExecutionTime("getFileApiTime", (end-start));
   								logger.error("The file does not exist for this bill");
   								return new ResponseEntity<String>(entity.toString(), HttpStatus.NOT_FOUND);
   							}
@@ -436,20 +438,20 @@ public class FileControllerAWSBucket {
   							{
   								entity.addProperty("message", "The file does not exist");
   								long end = System.currentTimeMillis();
-  				  				statsDClient.recordExecutionTime("getFileApiTime", (start-end));
+  				  				statsDClient.recordExecutionTime("getFileApiTime", (end-start));
   								logger.error("The file does not exist");
   								return new ResponseEntity<String>(entity.toString(), HttpStatus.NOT_FOUND);
   							}
   							if(bill.getFileImage().getFileId().equals(singleFile.getFileId()))
   							{
   								long end = System.currentTimeMillis();
-  				  				statsDClient.recordExecutionTime("getFileApiTime", (start-end));
-  								logger.info("The file successfuly retrieved in time : "+(start-end));
+  				  				statsDClient.recordExecutionTime("getFileApiTime", (end-start));
+  								logger.info("The file successfuly retrieved in time : "+(end-start));
   								return new ResponseEntity<FileImage>(singleFile , HttpStatus.OK);
   							}
   							entity.addProperty("message", "The file cannot be viewed as it does not belong to this particular bill");
   							long end = System.currentTimeMillis();
-  			  				statsDClient.recordExecutionTime("getFileApiTime", (start-end));
+  			  				statsDClient.recordExecutionTime("getFileApiTime", (end-start));
   							logger.error("The file cannot be viewed as it does not belong to this particular bill");
   							return new ResponseEntity<String>(entity.toString(), HttpStatus.UNAUTHORIZED);
 
@@ -459,7 +461,7 @@ public class FileControllerAWSBucket {
   						{
   							entity.addProperty("message", "The bill does not belong to particular user");
   							long end = System.currentTimeMillis();
-  			  				statsDClient.recordExecutionTime("getFileApiTime", (start-end));
+  			  				statsDClient.recordExecutionTime("getFileApiTime", (end-start));
   							logger.error("The bill does not belong to particular user");
   							return new ResponseEntity<String>(entity.toString(), HttpStatus.UNAUTHORIZED);
   						}
@@ -468,7 +470,7 @@ public class FileControllerAWSBucket {
   					{
   						entity.addProperty("message", "The bill does not exist.");
   						long end = System.currentTimeMillis();
-  		  				statsDClient.recordExecutionTime("getFileApiTime", (start-end));
+  		  				statsDClient.recordExecutionTime("getFileApiTime", (end-start));
   						logger.error("The bill does not exist.");
   						return new ResponseEntity<String>(entity.toString(), HttpStatus.NOT_FOUND);
   					}
@@ -477,7 +479,7 @@ public class FileControllerAWSBucket {
   				{
   					entity.addProperty("message", "The bill does not exist.");
   					long end = System.currentTimeMillis();
-  	  				statsDClient.recordExecutionTime("getFileApiTime", (start-end));
+  	  				statsDClient.recordExecutionTime("getFileApiTime", (end-start));
   					logger.error("The bill does not exist.");
   					return new ResponseEntity<String>(entity.toString(), HttpStatus.NOT_FOUND);
   				}
@@ -490,7 +492,7 @@ public class FileControllerAWSBucket {
 
   		entity.addProperty("message", "Invalid. Unable to Authenticate");	
 		long end = System.currentTimeMillis();
-		statsDClient.recordExecutionTime("getFileApiTime", (start-end));
+		statsDClient.recordExecutionTime("getFileApiTime", (end-start));
   		logger.error("Unable to Authenticate");
   		return new ResponseEntity<String>(entity.toString() , HttpStatus.UNAUTHORIZED);
   	}
@@ -525,14 +527,14 @@ public class FileControllerAWSBucket {
   			{
   				entity.addProperty("message", "User does not exist. Please enter correct Username or Password");
   				long end = System.currentTimeMillis();
-				statsDClient.recordExecutionTime("deleteFileApiTime", (start-end));
+				statsDClient.recordExecutionTime("deleteFileApiTime", (end-start));
   				logger.error("User does not exist. ");
   			}
   			else if(user != null && !bCryptPasswordEncoder.matches(password, user.getPassword()))
   			{
   				entity.addProperty("message", "The Password is Invalid");
   				long end = System.currentTimeMillis();
-				statsDClient.recordExecutionTime("deleteFileApiTime", (start-end));
+				statsDClient.recordExecutionTime("deleteFileApiTime", (end-start));
   				logger.error("The Password is Invalid");
   				return new ResponseEntity<String>(entity.toString() , HttpStatus.UNAUTHORIZED);
   			}
@@ -550,7 +552,7 @@ public class FileControllerAWSBucket {
 
   					entity.addProperty("message", "The bill does not exist or bill Id is incorrect.");
   					long end = System.currentTimeMillis();
-  					statsDClient.recordExecutionTime("deleteFileApiTime", (start-end));
+  					statsDClient.recordExecutionTime("deleteFileApiTime", (end-start));
   					logger.error("The bill does not exist or bill Id is incorrect.");
   					return new ResponseEntity<String>(entity.toString(), HttpStatus.NOT_FOUND);
   				}
@@ -565,7 +567,7 @@ public class FileControllerAWSBucket {
   						{
   							entity.addProperty("message", "The bill does not exist.");
   							long end = System.currentTimeMillis();
-  							statsDClient.recordExecutionTime("deleteFileApiTime", (start-end));
+  							statsDClient.recordExecutionTime("deleteFileApiTime", (end-start));
   							logger.error("The bill does not exist ");
   							return new ResponseEntity<String>(entity.toString(), HttpStatus.NOT_FOUND);
 
@@ -582,7 +584,7 @@ public class FileControllerAWSBucket {
   							{
   								entity.addProperty("message", "The file does not exist for this bill");
   								long end = System.currentTimeMillis();
-  								statsDClient.recordExecutionTime("deleteFileApiTime", (start-end));
+  								statsDClient.recordExecutionTime("deleteFileApiTime", (end-start));
   								logger.error("The file does not exist for this bill ");
   								return new ResponseEntity<String>(entity.toString(), HttpStatus.NOT_FOUND);
   							}
@@ -591,7 +593,7 @@ public class FileControllerAWSBucket {
   							{
   								entity.addProperty("message", "The file does not exist");
   								long end = System.currentTimeMillis();
-  								statsDClient.recordExecutionTime("deleteFileApiTime", (start-end));
+  								statsDClient.recordExecutionTime("deleteFileApiTime", (end-start));
   								logger.error("The file does not exist");
   								return new ResponseEntity<String>(entity.toString(), HttpStatus.NOT_FOUND);
   							}
@@ -601,8 +603,11 @@ public class FileControllerAWSBucket {
 									  String fileUrl=singleFile.getUrl();
 									  String fileName=fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
 									  AmazonS3 s3Client = AmazonS3ClientBuilder.standard().withRegion(Regions.US_EAST_1).build();
+									  long startAWSDelete = System.currentTimeMillis();
 							          DeleteObjectRequest deleteAttach=new DeleteObjectRequest(this.bucketName,fileName);
 							          s3Client.deleteObject(deleteAttach);
+							          long endAWSPostDelete = System.currentTimeMillis();
+							          statsDClient.recordExecutionTime("DeletetAWSFileS3", (endAWSPostDelete-startAWSDelete));
 									  
 								  }
   								catch(AmazonServiceException e){
@@ -615,16 +620,16 @@ public class FileControllerAWSBucket {
   							long startfiledb = System.currentTimeMillis();
   							fileRepository.delete(singleFile);
   							long endfiledb = System.currentTimeMillis();
-  							statsDClient.recordExecutionTime("deleteFileApiTime", (startfiledb-endfiledb));
+  							statsDClient.recordExecutionTime("deleteFileApiTime", (endfiledb-startfiledb));
   							long end = System.currentTimeMillis();
-  							statsDClient.recordExecutionTime("deleteFileApiTime", (start-end));
-  							logger.info("The file is deleted in time : "+(start-end));
+  							statsDClient.recordExecutionTime("deleteFileApiTime", (end-start));
+  							logger.info("The file is deleted in time : "+(end-start));
   							return new ResponseEntity<>(singleFile , HttpStatus.NO_CONTENT);
 
   							}
   							entity.addProperty("message", "The file cannot be deleted as it does not belong to this particular bill");
   							long end = System.currentTimeMillis();
-  							statsDClient.recordExecutionTime("deleteFileApiTime", (start-end));
+  							statsDClient.recordExecutionTime("deleteFileApiTime", (end-start));
   							logger.error("The file cannot be deleted as it does not belong to this particular bill");
   							return new ResponseEntity<String>(entity.toString(), HttpStatus.UNAUTHORIZED);
   						}		
@@ -633,7 +638,7 @@ public class FileControllerAWSBucket {
   						{
   							entity.addProperty("message", "The bill does not belong to particular ");
   							long end = System.currentTimeMillis();
-  							statsDClient.recordExecutionTime("deleteFileApiTime", (start-end));
+  							statsDClient.recordExecutionTime("deleteFileApiTime", (end-start));
   							logger.error("The bill does not belong to particular ");
   							return new ResponseEntity<String>(entity.toString(), HttpStatus.UNAUTHORIZED);
   						}
@@ -642,7 +647,7 @@ public class FileControllerAWSBucket {
   					{
   						entity.addProperty("message", "The bill does not exist.");
   						long end = System.currentTimeMillis();
-  						statsDClient.recordExecutionTime("deleteFileApiTime", (start-end));
+  						statsDClient.recordExecutionTime("deleteFileApiTime", (end-start));
   						logger.error("The bill does not exist.");
   						return new ResponseEntity<String>(entity.toString(), HttpStatus.NOT_FOUND);
   					}
@@ -654,7 +659,7 @@ public class FileControllerAWSBucket {
   				{
   					entity.addProperty("message", "The bill is null.");
   					long end = System.currentTimeMillis();
-  					statsDClient.recordExecutionTime("deleteFileApiTime", (start-end));
+  					statsDClient.recordExecutionTime("deleteFileApiTime", (end-start));
   					logger.error("The bill is null.");
   					return new ResponseEntity<String>(entity.toString(), HttpStatus.BAD_REQUEST);
 
@@ -667,7 +672,7 @@ public class FileControllerAWSBucket {
 
   		entity.addProperty("message", "Invalid. Unable to Authenticate");
   		long end = System.currentTimeMillis();
-		statsDClient.recordExecutionTime("deleteFileApiTime", (start-end));
+		statsDClient.recordExecutionTime("deleteFileApiTime", (end-start));
   		logger.error("Unable to Authenticate.");
   		return new ResponseEntity<String>(entity.toString() , HttpStatus.UNAUTHORIZED);
   	}
