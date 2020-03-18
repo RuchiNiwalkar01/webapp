@@ -68,8 +68,13 @@ public class RestExceptionHandler{
 	      
 	        else if (e.getMessage().contains("double")) 
 	        {
-	        	 entity.addProperty("message", "Amount should be a number");
-	        	 return new ResponseEntity<String>(entity.toString(), HttpStatus.BAD_REQUEST);
+	        	statsDClient.incrementCounter("bill.post");
+	        	long start = System.currentTimeMillis();
+	        	entity.addProperty("message", "Amount should be a number");
+	        	long end = System.currentTimeMillis();
+				statsDClient.recordExecutionTime("postBillApiTime", (end-start));
+				logger.error("Amount should be a number");
+	        	return new ResponseEntity<String>(entity.toString(), HttpStatus.BAD_REQUEST);
 	        } 
 	        entity.addProperty("message", "Invalid type");
 	        return new ResponseEntity<String>(entity.toString(), HttpStatus.BAD_REQUEST);

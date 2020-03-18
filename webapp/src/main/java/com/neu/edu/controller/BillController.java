@@ -174,12 +174,18 @@ public class BillController {
 						else
 						{
 							entity.addProperty("validation", " Please enter a valid date in YYYY-MM-DD format ");
+							long end = System.currentTimeMillis();
+							statsDClient.recordExecutionTime("postBillApiTime", (end-start));
+							logger.error("Please enter a valid date in YYYY-MM-DD format ");
 							return new ResponseEntity<String>(entity.toString() , HttpStatus.BAD_REQUEST);
 						}
 					}
 					else
 					{
 						entity.addProperty("validation", " Categories cannot be empty ");
+						long end = System.currentTimeMillis();
+						statsDClient.recordExecutionTime("postBillApiTime", (end-start));
+						logger.error("Categories cannot be empty ");
 						return new ResponseEntity<String>(entity.toString() , HttpStatus.BAD_REQUEST);
 					}
 				
@@ -188,6 +194,9 @@ public class BillController {
 				else
 				{
 					entity.addProperty("message", "vendor, bill_date, due_date, amount_due, categories, payment status cannot be empty or Amount cannot be below 0.00");
+					long end = System.currentTimeMillis();
+					statsDClient.recordExecutionTime("postBillApiTime", (end-start));
+					logger.error("vendor, bill_date, due_date, amount_due, categories, payment status cannot be empty or Amount cannot be below 0.00");
 					return new ResponseEntity<String>(entity.toString() , HttpStatus.BAD_REQUEST);
 				}
 			
@@ -499,12 +508,18 @@ public class BillController {
 										else
 										{
 											entity.addProperty("validation", " Please enter a valid date in YYYY-MM-DD format ");
+											long end = System.currentTimeMillis();
+											statsDClient.recordExecutionTime("PutBillApiTime", (end-start));
+											logger.error("Please enter a valid date in YYYY-MM-DD format ");
 											return new ResponseEntity<String>(entity.toString() , HttpStatus.BAD_REQUEST);
 										}
 									}
 									else
 									{
 										entity.addProperty("validation", " categories cannot be empty ");
+										long end = System.currentTimeMillis();
+										statsDClient.recordExecutionTime("PutBillApiTime", (end-start));
+										logger.error("categories cannot be empty  ");
 										return new ResponseEntity<String>(entity.toString() , HttpStatus.BAD_REQUEST);
 									}
 										
@@ -512,6 +527,9 @@ public class BillController {
 								else
 								{
 									entity.addProperty("message", "vendor, bill_date, due_date, amount_due, categories or payment status cannot be empty");
+									long end = System.currentTimeMillis();
+									statsDClient.recordExecutionTime("PutBillApiTime", (end-start));
+									logger.error("vendor, bill_date, due_date, amount_due, categories or payment status cannot be empty");
 									return new ResponseEntity<String>(entity.toString() , HttpStatus.BAD_REQUEST);
 								}
 								
@@ -519,12 +537,18 @@ public class BillController {
 							else
 							{
 								entity.addProperty("message", "The bill does not belong to particular user");
+								long end = System.currentTimeMillis();
+								statsDClient.recordExecutionTime("PutBillApiTime", (end-start));
+								logger.error("The bill does not belong to particular user");
 								return new ResponseEntity<String>(entity.toString(), HttpStatus.UNAUTHORIZED);
 							}
 						}
 						else
 						{
 							entity.addProperty("message", "The bill does not exist.");
+							long end = System.currentTimeMillis();
+							statsDClient.recordExecutionTime("PutBillApiTime", (end-start));
+							logger.error("The bill does not exist");
 							return new ResponseEntity<String>(entity.toString(), HttpStatus.NOT_FOUND);
 							
 						}
@@ -533,6 +557,9 @@ public class BillController {
 					else
 					{
 						entity.addProperty("message", "The bill does not exist.");
+						long end = System.currentTimeMillis();
+						statsDClient.recordExecutionTime("PutBillApiTime", (end-start));
+						logger.error("The bill does not exist");
 						return new ResponseEntity<String>(entity.toString(), HttpStatus.NOT_FOUND);
 						
 					}
@@ -540,6 +567,9 @@ public class BillController {
 				else
 				{
 					entity.addProperty("message", "The bill id cannot be null.");
+					long end = System.currentTimeMillis();
+					statsDClient.recordExecutionTime("PutBillApiTime", (end-start));
+					logger.error("The bill id cannot be null");
 					return new ResponseEntity<String>(entity.toString(), HttpStatus.BAD_REQUEST);
 				}
 			}					
@@ -560,7 +590,7 @@ public class BillController {
 	public ResponseEntity<?> deleteBillById(HttpServletRequest request, HttpServletResponse response, @PathVariable(value = "id") @NotBlank @NotNull String billId )
 	{
 		statsDClient.incrementCounter("bill.delete");
-		logger.info("Inside delete Api");
+		logger.info("Inside delete Bill Api");
 		long start = System.currentTimeMillis();
 		
 		String authorization = request.getHeader("Authorization");
