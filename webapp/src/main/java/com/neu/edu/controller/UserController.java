@@ -48,8 +48,9 @@ public class UserController {
 	public ResponseEntity<?> createUser(@Valid @RequestBody(required = false) User user)
 	{
 		statsDClient.incrementCounter("user.post");
-		logger.info("Inside Post User Api");
 		long start = System.currentTimeMillis();
+		logger.info("Inside Post User Api");
+	
 		if(user==null)
 		{
 			JsonObject entity = new JsonObject();
@@ -86,14 +87,14 @@ public class UserController {
 				u.setAccount_updated(dateFormat.toString());
 				long startuserdb = System.currentTimeMillis();
 				userRepository.save(u);
-				u.setPassword(null);
 				long enduserdb = System.currentTimeMillis();
-				statsDClient.recordExecutionTime("Postuserdb", startuserdb-enduserdb);
+				long timeDif =  (enduserdb-startuserdb);
+				statsDClient.recordExecutionTime("Postuserdb", timeDif);
+				u.setPassword(null);
 				long end = System.currentTimeMillis();
-				statsDClient.recordExecutionTime("postUserApiTime", start-end);
-				logger.info("User Created with time :"+(start-end));
+				statsDClient.recordExecutionTime("postUserApiTime", end-start);
+				logger.info("User Created with time :"+(end-start));
 				JsonObject entity = new JsonObject();
-				
 				return new ResponseEntity<User>(u, HttpStatus.CREATED);	
 			}
 			 
