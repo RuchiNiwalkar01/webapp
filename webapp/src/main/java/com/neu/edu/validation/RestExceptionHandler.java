@@ -2,6 +2,9 @@ package com.neu.edu.validation;
 
 import javax.net.ssl.HttpsURLConnection;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -20,11 +23,17 @@ import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.google.gson.JsonObject;
+import com.neu.edu.controller.BillController;
 import com.neu.edu.exception.BillException;
+import com.timgroup.statsd.StatsDClient;
 
 @ControllerAdvice
 public class RestExceptionHandler{
-	    
+	
+	@Autowired
+	StatsDClient statsDClient;
+
+    final static Logger logger = LoggerFactory.getLogger(BillController.class);
 	     
 //	    @ExceptionHandler
 //	    public ResponseEntity<?> onHttpMessageNotReadable(final Exception e) throws Throwable {
@@ -48,7 +57,11 @@ public class RestExceptionHandler{
 	    	
 	        if (e.getMessage().contains("Enum")) 
 	        {
+	        	long start = System.currentTimeMillis();
 	        	entity.addProperty("message", "Payment_status field should be in [ paid, due, past_due, no_payment_required ]");
+	        	long end = System.currentTimeMillis();
+				statsDClient.recordExecutionTime("postBillApiTime", (end-start));
+				logger.error("Payment_status field should be in [ paid, due, past_due, no_payment_required ]");
 	            return new ResponseEntity<String>(entity.toString(),HttpStatus.BAD_REQUEST);
 	        } 
 	      

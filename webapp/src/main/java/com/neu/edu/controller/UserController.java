@@ -56,7 +56,7 @@ public class UserController {
 			JsonObject entity = new JsonObject();
 			entity.addProperty("message", "Request Body cannot be null");
 			long end = System.currentTimeMillis();
-			statsDClient.recordExecutionTime("postUserApiTime", (start-end));
+			statsDClient.recordExecutionTime("postUserApiTime", (end-start));
 			logger.error("Request Body cannot be null");
 			return new ResponseEntity<String>(entity.toString(), HttpStatus.BAD_REQUEST);
 			
@@ -66,7 +66,7 @@ public class UserController {
 			JsonObject entity = new JsonObject();
 			entity.addProperty("message", "User already exists");
 			long end = System.currentTimeMillis();
-			statsDClient.recordExecutionTime("postUserApiTime", (start-end));
+			statsDClient.recordExecutionTime("postUserApiTime", (end-start));
 			logger.error("User already exists");
 			return new ResponseEntity<String>(entity.toString(), HttpStatus.BAD_REQUEST);
 		}
@@ -101,7 +101,7 @@ public class UserController {
 			JsonObject entity = new JsonObject();
 			entity.addProperty("Validation Error", "Please input correct email id or a strong Password with atleast 8 chars including 1 number and 1 special char");
 			long end = System.currentTimeMillis();
-			statsDClient.recordExecutionTime("postUserApiTime", (start-end));
+			statsDClient.recordExecutionTime("postUserApiTime", (end-start));
 			logger.error("Please input correct email id or a strong Password with atleast 8 chars including 1 number and 1 special char");
 			return new ResponseEntity<String>(entity.toString(), HttpStatus.BAD_REQUEST);
 		}
@@ -109,7 +109,7 @@ public class UserController {
 		JsonObject entity = new JsonObject();
 		entity.addProperty("message", "Email, FirstName, LastName and Password all four fields cannot be null or First and Last Name cannot be blank");
 		long end = System.currentTimeMillis();
-		statsDClient.recordExecutionTime("postUserApiTime", (start-end));
+		statsDClient.recordExecutionTime("postUserApiTime", (end-start));
 		logger.error("Email, FirstName, LastName and Password all four fields cannot be null or First and Last Name cannot be blank");
 		return new ResponseEntity<String>(entity.toString(), HttpStatus.BAD_REQUEST);
 	}
@@ -143,14 +143,14 @@ public class UserController {
 			if(user == null)
 			{
 				long end = System.currentTimeMillis();
-				statsDClient.recordExecutionTime("getUserApiTime", (start-end));
+				statsDClient.recordExecutionTime("getUserApiTime", (end-start));
 				logger.error("Please enter correct Username or Password");
 				entity.addProperty("message", "Please enter correct Username or Password");
 			}
 			else if(user != null && !bCryptPasswordEncoder.matches(password, user.getPassword()))
 			{
 				long end = System.currentTimeMillis();
-				statsDClient.recordExecutionTime("getUserApiTime", (start-end));
+				statsDClient.recordExecutionTime("getUserApiTime", (end-start));
 				logger.error("The Password is Invalid");
 				entity.addProperty("message", "The Password is Invalid");
 			}
@@ -160,7 +160,7 @@ public class UserController {
 				//String jsonUser=new GsonBuilder().setPrettyPrinting().create().toJson(user);
 				responseHeaders.set("MyResponseHeader", "MyValue");
 				long end = System.currentTimeMillis();
-				statsDClient.recordExecutionTime("getUserApiTime", (start-end));
+				statsDClient.recordExecutionTime("getUserApiTime", (end-start));
 				logger.info("User successfully retrieved");
 				return new ResponseEntity<User>(user , HttpStatus.OK);
 			}					
@@ -171,7 +171,7 @@ public class UserController {
 
 		entity.addProperty("message", "Invalid. Unable to Authenticate");	
 		long end = System.currentTimeMillis();
-		statsDClient.recordExecutionTime("getUserApiTime", (start-end));
+		statsDClient.recordExecutionTime("getUserApiTime", (end-start));
 		logger.error("Invalid. Unable to Authenticate");
 		return new ResponseEntity<String>(entity.toString() , HttpStatus.UNAUTHORIZED);
 	}
@@ -199,14 +199,14 @@ public class UserController {
 			if(u == null)
 			{
 				long end = System.currentTimeMillis();
-				statsDClient.recordExecutionTime("putUserApiTime", (start-end));
+				statsDClient.recordExecutionTime("putUserApiTime", (end-start));
 				logger.error("Please enter correct Username or Password");
 				entity.addProperty("message", "Please enter correct Username or Password");
 			}
 			else if(u != null && !bCryptPasswordEncoder.matches(password, u.getPassword()))
 			{
 				long end = System.currentTimeMillis();
-				statsDClient.recordExecutionTime("putUserApiTime", (start-end));
+				statsDClient.recordExecutionTime("putUserApiTime", (end-start));
 				logger.error("The Password is Invalid");
 				entity.addProperty("message", "The Password is Invalid");
 			}
@@ -217,7 +217,7 @@ public class UserController {
 					
 					entity.addProperty("message", "Request Body cannot be null");
 					long end = System.currentTimeMillis();
-					statsDClient.recordExecutionTime("putUserApiTime", (start-end));
+					statsDClient.recordExecutionTime("putUserApiTime", (end-start));
 					logger.error("Request Body cannot be null");
 					return new ResponseEntity<String>(entity.toString(), HttpStatus.BAD_REQUEST);
 					
@@ -238,10 +238,10 @@ public class UserController {
 							long startuserdb = System.currentTimeMillis();
 							userRepository.save(u);
 							long enduserdb = System.currentTimeMillis();
-							statsDClient.recordExecutionTime("Putuserdb", (startuserdb-enduserdb));
+							statsDClient.recordExecutionTime("Putuserdb", (enduserdb-startuserdb));
 							long end = System.currentTimeMillis();
-							statsDClient.recordExecutionTime("putUserApiTime", (start-end));
-							logger.info("User successfully updated in time : "+(start-end));
+							statsDClient.recordExecutionTime("putUserApiTime", (end-start));
+							logger.info("User successfully updated in time : "+(end-start));
 							return new ResponseEntity<String>(HttpStatus.NO_CONTENT);
 						}
 						else
@@ -249,7 +249,7 @@ public class UserController {
 							//JsonObject jsonObject = new JsonObject();
 							entity.addProperty("Validation Error", "Please input correct email id or a strong Password with atleast 8 chars including 1 number and 1 special char");
 							long end = System.currentTimeMillis();
-							statsDClient.recordExecutionTime("putUserApiTime", (start-end));
+							statsDClient.recordExecutionTime("putUserApiTime", (end-start));
 							logger.error("Please input correct email id or a strong Password with atleast 8 chars including 1 number and 1 special char");
 							return new ResponseEntity<String>(entity.toString(), HttpStatus.BAD_REQUEST);
 						}
@@ -260,7 +260,7 @@ public class UserController {
 						//JsonObject jsonObject = new JsonObject();
 						entity.addProperty("Message", "User cannot update email ");
 						long end = System.currentTimeMillis();
-						statsDClient.recordExecutionTime("putUserApiTime", (start-end));
+						statsDClient.recordExecutionTime("putUserApiTime", (end-start));
 						logger.error("User cannot update email ");
 						return new ResponseEntity<String>(entity.toString(), HttpStatus.BAD_REQUEST);
 					}
@@ -269,7 +269,7 @@ public class UserController {
 						//JsonObject jsonObject = new JsonObject();
 						entity.addProperty("Message", "user cannot update information of another user");
 						long end = System.currentTimeMillis();
-						statsDClient.recordExecutionTime("putUserApiTime", (start-end));
+						statsDClient.recordExecutionTime("putUserApiTime", (end-start));
 						logger.error("user cannot update information of another user");
 						return new ResponseEntity<String>(entity.toString(), HttpStatus.BAD_REQUEST);
 					}
@@ -277,7 +277,7 @@ public class UserController {
 					{
 						entity.addProperty("Message", "Email cannot be updated ");
 						long end = System.currentTimeMillis();
-						statsDClient.recordExecutionTime("putUserApiTime", (start-end));
+						statsDClient.recordExecutionTime("putUserApiTime", (end-start));
 						logger.error("Email cannot be updated ");
 						return new ResponseEntity<String>(entity.toString(), HttpStatus.BAD_REQUEST);
 					}
@@ -287,7 +287,7 @@ public class UserController {
 					//JsonObject jsonObject = new JsonObject();
 					entity.addProperty("message", "Email, FirstName, LastName and Password all four fields cannot be null or First and Last Name cannot be blank");
 					long end = System.currentTimeMillis();
-					statsDClient.recordExecutionTime("putUserApiTime", (start-end));
+					statsDClient.recordExecutionTime("putUserApiTime", (end-start));
 					logger.error("Email, FirstName, LastName and Password all four fields cannot be null or First and Last Name cannot be blank");
 					return new ResponseEntity<String>(entity.toString(), HttpStatus.BAD_REQUEST);
 				}
@@ -299,7 +299,7 @@ public class UserController {
 		
 		entity.addProperty("message", "Invalid. Unable to Authenticate");	
 		long end = System.currentTimeMillis();
-		statsDClient.recordExecutionTime("putUserApiTime", (start-end));
+		statsDClient.recordExecutionTime("putUserApiTime", (end-start));
 		logger.error("Invalid. Unable to Authenticate");
 		return new ResponseEntity<String>(entity.toString() , HttpStatus.UNAUTHORIZED);
 	}
