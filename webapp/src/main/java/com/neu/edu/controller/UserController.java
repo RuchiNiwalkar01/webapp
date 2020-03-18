@@ -88,9 +88,9 @@ public class UserController {
 				userRepository.save(u);
 				u.setPassword(null);
 				long enduserdb = System.currentTimeMillis();
-				statsDClient.recordExecutionTime("Postuserdb", (startuserdb-enduserdb));
+				statsDClient.recordExecutionTime("Postuserdb", startuserdb-enduserdb);
 				long end = System.currentTimeMillis();
-				statsDClient.recordExecutionTime("postUserApiTime", (start-end));
+				statsDClient.recordExecutionTime("postUserApiTime", start-end);
 				logger.info("User Created with time :"+(start-end));
 				JsonObject entity = new JsonObject();
 				
