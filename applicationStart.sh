@@ -1,7 +1,7 @@
 #!/bin/bash
 cd /home/ubuntu
 sudo chown -R ubuntu:ubuntu /home/ubuntu/
-. /etc/profile
+source /etc/profile
 sudo chmod +x /home/ubuntu/webapp-0.0.1-SNAPSHOT.jar
 #sudo kill  $(cat /home/ubuntu/pid.file)
 sudo kill -9 $(sudo lsof -t -i:8080)
