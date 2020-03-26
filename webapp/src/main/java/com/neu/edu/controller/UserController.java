@@ -43,6 +43,13 @@ public class UserController {
 	String pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
 	SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
 
+
+	@GetMapping("/")
+    public ResponseEntity<?> healthCheck(){
+        statsDClient.incrementCounter("user.http.get");
+        return new ResponseEntity("HealthCheckEndpoint",HttpStatus.OK);
+
+    }
 	//create a User
 	@PostMapping(value="/v1/user")
 	public ResponseEntity<?> createUser(@Valid @RequestBody(required = false) User user)
