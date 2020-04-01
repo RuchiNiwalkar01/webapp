@@ -33,7 +33,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException.BadRequest;
-
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
@@ -52,8 +51,23 @@ import com.neu.edu.repository.BillRepositoryfindaSpecificBill;
 import com.neu.edu.repository.FileRepository;
 import com.neu.edu.repository.UserRepository;
 import com.timgroup.statsd.StatsDClient;
+import com.amazonaws.services.sns.AmazonSNS;
+import com.amazonaws.services.sns.AmazonSNSAsyncClientBuilder;
+import com.amazonaws.services.sns.model.PublishRequest;
+import com.amazonaws.services.sns.model.Topic;
+import com.amazonaws.services.sqs.AmazonSQS;
+import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
+import com.amazonaws.services.sqs.model.AmazonSQSException;
+import com.amazonaws.services.sqs.model.CreateQueueResult;
+import com.amazonaws.services.sqs.model.Message;
+import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
+import com.amazonaws.services.sqs.model.ReceiveMessageResult;
+import com.amazonaws.services.sqs.model.SendMessageRequest;
 
-
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 @RestController
 public class BillController {
 
@@ -735,6 +749,129 @@ public class BillController {
 		entity.addProperty("message", "Invalid. Unable to Authenticate");
 		long end = System.currentTimeMillis();
 		statsDClient.recordExecutionTime("DeleteBillApiTime", (end-start));
+		logger.error("Unable to Authenticate");
+		return new ResponseEntity<String>(entity.toString() , HttpStatus.UNAUTHORIZED);
+	}
+
+	  //Get Due bill by Specific User 
+	//200 for success, 401 no authorization
+	@GetMapping(value = "/v1/bills/due/x")
+	public ResponseEntity<?> getDueBillsByUserId(HttpServletRequest request, HttpServletResponse response)
+	{
+	  
+		String authorization = request.getHeader("Authorization");
+		JsonObject entity = new JsonObject();
+		if(authorization != null && authorization.toLowerCase().startsWith("basic"))
+		{
+			// Authorization: Basic base64credentials
+			authorization = authorization.replaceFirst("Basic ", "");
+
+			String credentials = new String(Base64.getDecoder().decode(authorization.getBytes()));
+
+			// authorization = username:password
+			String [] userCredentials = credentials.split(":", 2);
+			String email = userCredentials[0];
+
+			String password = userCredentials[1];
+
+			User user = userRepository.findByemail(email);
+			if(user == null)
+			{
+				entity.addProperty("message", "User does not exist. Please enter correct Username or Password");
+			}
+			else if(user != null && !bCryptPasswordEncoder.matches(password, user.getPassword()))
+			{
+				entity.addProperty("message", "The Password is Invalid");
+				return new ResponseEntity<String>(entity.toString() , HttpStatus.UNAUTHORIZED);
+			}
+			else
+			{
+				List<Bill> listOfBills = billRepository.findByUserId(user.getId());
+				
+				if(listOfBills.size() ==0)
+				{
+					entity.addProperty("message", "The bills do not exist");
+					return new ResponseEntity<String>(entity.toString() , HttpStatus.NOT_FOUND);
+				}
+				
+				JSONArray jsonArray = new JSONArray();
+				JSONObject jsonObject = new JSONObject();
+				jsonObject.put("username", user.getEmail());
+				//jsonObject.put("NumOfDays", noOfDays);
+				
+				
+//				for(int i=0 ; i<listOfBills.size() ; i++)
+//				{
+//					jsonArray.add(listOfBills.get(i).getId());
+//					//logger.info("Entries: " + listOfBills.get(i).getId());
+//					
+//				}
+//				jsonObject.put("bills",jsonArray );
+			
+				//  System.out.println("The bills " + jsonObject.get("bills"));
+			   //   System.out.println();
+			  	logger.info("The email address " + jsonObject.get("username"));
+			     //create SQS queue and send message
+			      
+//			      final AmazonSQS sqs = AmazonSQSClientBuilder.defaultClient();
+//
+//			        try 
+//			        {
+//			            CreateQueueResult create_result = sqs.createQueue(QUEUE_NAME);
+//			        } 
+//			        catch (AmazonSQSException e) 
+//			        {
+//			            if (!e.getErrorCode().equals("QueueAlreadyExists")) 
+//			            {
+//			                throw e;
+//			            }
+//			        }
+//
+//			        String queueUrl = sqs.getQueueUrl(QUEUE_NAME).getQueueUrl();
+//
+//			        SendMessageRequest send_msg_request = new SendMessageRequest()
+//			                .withQueueUrl(queueUrl)
+//			                .withMessageBody(jsonObject.toString())
+//			                .withDelaySeconds(5);
+//			        sqs.sendMessage(send_msg_request);
+//			       
+//			     //SQS polling
+//			        List<Message> messages = sqs.receiveMessage(queueUrl).getMessages();
+//			        String messageReceiptHandle = messages.get(0).getBody();				        
+//			        JSONParser parser = new JSONParser();
+//			        try 
+//			        {
+//						JSONObject json = (JSONObject) parser.parse(messageReceiptHandle);
+//						int num = (int) json.get("NumOfDays");
+//						
+//					} 
+//			        catch (ParseException e) 
+//			        {
+//					
+//						e.printStackTrace();
+//					}
+//			        
+//			     
+			        
+			      //publish topic to SNS
+			      AmazonSNS sns = AmazonSNSAsyncClientBuilder.standard().withRegion(Regions.US_EAST_1).build();
+			      List<Topic> topics = sns.listTopics().getTopics();
+			      for(Topic topic : topics)
+			      {
+			    	  if(topic.getTopicArn().startsWith("BillsDue"))
+			    	  {
+			    		  PublishRequest pubRequest = new PublishRequest(topic.getTopicArn(), jsonObject.toString());
+					      sns.publish(pubRequest);
+					      break;
+			    	  }
+			    	  
+			      }
+			     entity.addProperty("message", "Bills Due added succesfully");
+				return new ResponseEntity<String>(entity.toString() , HttpStatus.OK);
+			    
+			}
+	}
+		
 		logger.error("Unable to Authenticate");
 		return new ResponseEntity<String>(entity.toString() , HttpStatus.UNAUTHORIZED);
 	}
