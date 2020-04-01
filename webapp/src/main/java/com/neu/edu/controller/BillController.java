@@ -758,7 +758,7 @@ public class BillController {
 	@GetMapping(value = "/v1/bills/due/x")
 	public ResponseEntity<?> getDueBillsByUserId(HttpServletRequest request, HttpServletResponse response)
 	{
-	  
+		logger.info("Inside days to caulcate API");
 		String authorization = request.getHeader("Authorization");
 		JsonObject entity = new JsonObject();
 		if(authorization != null && authorization.toLowerCase().startsWith("basic"))
@@ -860,6 +860,7 @@ public class BillController {
 			      {
 			    	  if(topic.getTopicArn().startsWith("BillsDue"))
 			    	  {
+			    		  logger.info("The topic is " + topic.getTopicArn());
 			    		  PublishRequest pubRequest = new PublishRequest(topic.getTopicArn(), jsonObject.toString());
 					      sns.publish(pubRequest);
 					      break;
