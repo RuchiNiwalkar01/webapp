@@ -792,7 +792,7 @@ public class BillController {
 			     //create SQS queue and send message
 			      
 			      final AmazonSQS sqs = AmazonSQSClientBuilder.standard().withRegion(Regions.US_EAST_1).build();
-
+			    
 //			        try 
 //			        {
 //			            CreateQueueResult create_result = sqs.createQueue(QUEUE_NAME);
@@ -831,7 +831,9 @@ public class BillController {
 			        String msg="";
 			        	for(Message m : messages)
 			        	{
+			        
 			        		 logger.info("Message content is: "+m.getBody());
+			        		 sqs.changeMessageVisibility(queueUrl, m.getBody(),  60 * 60);
 			        		 msg= msg+m.getBody();
 			        	}
 			      //  String messageReceiptHandle = messages.get(0).getBody();				        
@@ -942,4 +944,5 @@ public class BillController {
 		}
 
 	}
+	
 }
