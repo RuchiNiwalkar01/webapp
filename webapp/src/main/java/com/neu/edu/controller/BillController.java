@@ -794,9 +794,9 @@ public class BillController {
 					return new ResponseEntity<String>(entity.toString() , HttpStatus.NOT_FOUND);
 				}
 				
-				JSONArray jsonArray = new JSONArray();
-				JSONObject jsonObject = new JSONObject();
-				jsonObject.put("username", user.getEmail());
+//				JSONArray jsonArray = new JSONArray();
+//				JSONObject jsonObject = new JSONObject();
+//				jsonObject.put("username", user.getEmail());
 				//jsonObject.put("NumOfDays", noOfDays);
 				
 				
@@ -810,7 +810,7 @@ public class BillController {
 			
 				//  System.out.println("The bills " + jsonObject.get("bills"));
 			   //   System.out.println();
-			  	logger.info("The email address " + jsonObject.get("username"));
+			  	logger.info("The email address " + user.getEmail());
 			     //create SQS queue and send message
 			      
 //			      final AmazonSQS sqs = AmazonSQSClientBuilder.defaultClient();
@@ -858,10 +858,10 @@ public class BillController {
 			      List<Topic> topics = sns.listTopics().getTopics();
 			      for(Topic topic : topics)
 			      {
-			    	  if(topic.getTopicArn().startsWith("BillsDue"))
+			    	  if(topic.getTopicArn().startsWith("TestBills"))
 			    	  {
 			    		  logger.info("The topic is " + topic.getTopicArn());
-			    		  PublishRequest pubRequest = new PublishRequest(topic.getTopicArn(), jsonObject.toString());
+			    		  PublishRequest pubRequest = new PublishRequest(topic.getTopicArn(), user.getEmail());
 					      sns.publish(pubRequest);
 					      break;
 			    	  }
