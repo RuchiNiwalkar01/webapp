@@ -858,9 +858,10 @@ public class BillController {
 			      List<Topic> topics = sns.listTopics().getTopics();
 			      for(Topic topic : topics)
 			      {
-			    	  if(topic.getTopicArn().startsWith("TestBills"))
+			    	  logger.info("The topic is " + topic.getTopicArn());
+			    	  if(topic.getTopicArn().endsWith("TestBills"))
 			    	  {
-			    		  logger.info("The topic is " + topic.getTopicArn());
+			    		
 			    		  PublishRequest pubRequest = new PublishRequest(topic.getTopicArn(), user.getEmail());
 					      sns.publish(pubRequest);
 					      break;
