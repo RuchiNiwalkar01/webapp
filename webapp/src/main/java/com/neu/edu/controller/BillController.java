@@ -1,6 +1,5 @@
 package com.neu.edu.controller;
 
-import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Base64;
 import java.util.Date;
@@ -9,7 +8,6 @@ import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
@@ -19,38 +17,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.HttpClientErrorException.BadRequest;
+
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.DeleteObjectRequest;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.exc.InvalidFormatException;
-import com.google.gson.JsonObject;
-import com.neu.edu.exception.BillException;
-import com.neu.edu.model.Bill;
-import com.neu.edu.model.FileImage;
-import com.neu.edu.model.PaymentStatus;
-import com.neu.edu.model.User;
-import com.neu.edu.repository.BillRepository;
-import com.neu.edu.repository.BillRepositoryfindaSpecificBill;
-import com.neu.edu.repository.FileRepository;
-import com.neu.edu.repository.UserRepository;
-import com.timgroup.statsd.StatsDClient;
 import com.amazonaws.services.sns.AmazonSNS;
 import com.amazonaws.services.sns.AmazonSNSAsyncClientBuilder;
 import com.amazonaws.services.sns.model.PublishRequest;
@@ -61,13 +42,17 @@ import com.amazonaws.services.sqs.model.AmazonSQSException;
 import com.amazonaws.services.sqs.model.CreateQueueResult;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
-import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
-
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
+import com.google.gson.JsonObject;
+import com.neu.edu.model.Bill;
+import com.neu.edu.model.FileImage;
+import com.neu.edu.model.PaymentStatus;
+import com.neu.edu.model.User;
+import com.neu.edu.repository.BillRepository;
+import com.neu.edu.repository.BillRepositoryfindaSpecificBill;
+import com.neu.edu.repository.FileRepository;
+import com.neu.edu.repository.UserRepository;
+import com.timgroup.statsd.StatsDClient;
 @RestController
 public class BillController {
 
@@ -92,6 +77,7 @@ public class BillController {
 
     final static Logger logger = LoggerFactory.getLogger(BillController.class);
     
+    final static String QUEUE_NAME ="testqueue";
 	String pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
 	SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
 
@@ -755,8 +741,8 @@ public class BillController {
 
 	  //Get Due bill by Specific User 
 	//200 for success, 401 no authorization
-	@GetMapping(value = "/v1/bills/due/x")
-	public ResponseEntity<?> getDueBillsByUserId(HttpServletRequest request, HttpServletResponse response)
+	@GetMapping(value = "/v1/bills/due/{x}")
+	public ResponseEntity<?> getDueBillsByUserId(HttpServletRequest request, HttpServletResponse response, @PathVariable(value = "x") @NotBlank @NotNull int numOfDays)
 	{
 		logger.info("Inside days to caulcate API");
 		String authorization = request.getHeader("Authorization");
@@ -788,7 +774,7 @@ public class BillController {
 			{
 				List<Bill> listOfBills = billRepository.findByUserId(user.getId());
 				
-				if(listOfBills.size() ==0)
+				if(listOfBills.size() == 0)
 				{
 					entity.addProperty("message", "The bills do not exist");
 					return new ResponseEntity<String>(entity.toString() , HttpStatus.NOT_FOUND);
@@ -813,31 +799,41 @@ public class BillController {
 			  	logger.info("The email address " + user.getEmail());
 			     //create SQS queue and send message
 			      
-//			      final AmazonSQS sqs = AmazonSQSClientBuilder.defaultClient();
-//
-//			        try 
-//			        {
-//			            CreateQueueResult create_result = sqs.createQueue(QUEUE_NAME);
-//			        } 
-//			        catch (AmazonSQSException e) 
-//			        {
-//			            if (!e.getErrorCode().equals("QueueAlreadyExists")) 
-//			            {
-//			                throw e;
-//			            }
-//			        }
-//
-//			        String queueUrl = sqs.getQueueUrl(QUEUE_NAME).getQueueUrl();
-//
-//			        SendMessageRequest send_msg_request = new SendMessageRequest()
-//			                .withQueueUrl(queueUrl)
-//			                .withMessageBody(jsonObject.toString())
-//			                .withDelaySeconds(5);
-//			        sqs.sendMessage(send_msg_request);
-//			       
-//			     //SQS polling
-//			        List<Message> messages = sqs.receiveMessage(queueUrl).getMessages();
-//			        String messageReceiptHandle = messages.get(0).getBody();				        
+			      final AmazonSQS sqs = AmazonSQSClientBuilder.defaultClient();
+
+			        try 
+			        {
+			            CreateQueueResult create_result = sqs.createQueue(QUEUE_NAME);
+			        	logger.info("Created Queue");
+			        } 
+			        catch (AmazonSQSException e) 
+			        {
+			            if (!e.getErrorCode().equals("QueueAlreadyExists")) 
+			            {
+			                throw e;
+			            }
+			        }
+
+			        String queueUrl = sqs.getQueueUrl(QUEUE_NAME).getQueueUrl();
+			    	logger.info("queueUrl "+queueUrl);
+			        SendMessageRequest send_msg_request = new SendMessageRequest()
+			                .withQueueUrl(queueUrl)
+			                .withMessageBody(user.getEmail())
+			                .withDelaySeconds(30);
+			        sqs.sendMessage(send_msg_request);
+			        logger.info("Message Sent in Queue : "+send_msg_request);
+			     //SQS polling
+			        ReceiveMessageRequest receive_request = new ReceiveMessageRequest().withQueueUrl(queueUrl).withWaitTimeSeconds(20);
+			        List<Message> messages = sqs.receiveMessage(receive_request).getMessages();
+			        logger.info("Message received no : "+messages.size());
+			        AmazonSNS sns = AmazonSNSAsyncClientBuilder.standard().withRegion(Regions.US_EAST_1).build();
+			        String msg="";
+			        	for(Message m : messages)
+			        	{
+			        		 logger.info("Message content is: "+m.getBody());
+			        		 msg= msg+m.getBody();
+			        	}
+			      //  String messageReceiptHandle = messages.get(0).getBody();				        
 //			        JSONParser parser = new JSONParser();
 //			        try 
 //			        {
@@ -851,10 +847,10 @@ public class BillController {
 //						e.printStackTrace();
 //					}
 //			        
-//			     
+			     
 			        
 			      //publish topic to SNS
-			      AmazonSNS sns = AmazonSNSAsyncClientBuilder.standard().withRegion(Regions.US_EAST_1).build();
+			        	 logger.info("publishing to SNS");
 			      List<Topic> topics = sns.listTopics().getTopics();
 			      for(Topic topic : topics)
 			      {
@@ -862,8 +858,8 @@ public class BillController {
 			    	  if(topic.getTopicArn().endsWith("TestBills"))
 			    	  {
 			    		
-			    		  PublishRequest pubRequest = new PublishRequest(topic.getTopicArn(), user.getEmail());
-					      sns.publish(pubRequest);
+			    		  PublishRequest pubRequest = new PublishRequest(topic.getTopicArn(), msg);
+			    		  sns.publish(pubRequest);
 					      break;
 			    	  }
 			    	  
