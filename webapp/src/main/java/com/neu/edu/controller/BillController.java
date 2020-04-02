@@ -35,6 +35,7 @@ import com.amazonaws.services.s3.model.DeleteObjectRequest;
 import com.amazonaws.services.sns.AmazonSNS;
 import com.amazonaws.services.sns.AmazonSNSAsyncClientBuilder;
 import com.amazonaws.services.sns.model.PublishRequest;
+import com.amazonaws.services.sns.model.PublishResult;
 import com.amazonaws.services.sns.model.Topic;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
@@ -76,8 +77,6 @@ public class BillController {
 	StatsDClient statsDClient;
 
     final static Logger logger = LoggerFactory.getLogger(BillController.class);
-    
-    final static String QUEUE_NAME ="testqueue";
 	String pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
 	SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
 
@@ -801,31 +800,31 @@ public class BillController {
 			      
 			      final AmazonSQS sqs = AmazonSQSClientBuilder.standard().withRegion(Regions.US_EAST_1).build();
 
-			        try 
-			        {
-			            CreateQueueResult create_result = sqs.createQueue(QUEUE_NAME);
-			        	logger.info("Created Queue");
-			        } 
-			        catch (AmazonSQSException e) 
-			        {
-			            if (!e.getErrorCode().equals("QueueAlreadyExists")) 
-			            {
-			                throw e;
-			            }
-			        }
+//			        try 
+//			        {
+//			            CreateQueueResult create_result = sqs.createQueue(QUEUE_NAME);
+//			        	logger.info("Created Queue");
+//			        } 
+//			        catch (AmazonSQSException e) 
+//			        {
+//			            if (!e.getErrorCode().equals("QueueAlreadyExists")) 
+//			            {
+//			                throw e;
+//			            }
+//			        }
 
-			        String queueUrl = sqs.getQueueUrl(QUEUE_NAME).getQueueUrl();
+			        String queueUrl = sqs.getQueueUrl("testqueue").getQueueUrl();
 			    	logger.info("queueUrl "+queueUrl);
 			        SendMessageRequest send_msg_request = new SendMessageRequest()
 			                .withQueueUrl(queueUrl)
 			                .withMessageBody(user.getEmail())
-			                .withDelaySeconds(30);
+			                .withDelaySeconds(5);
 			        sqs.sendMessage(send_msg_request);
 			        logger.info("Message Sent in Queue : "+send_msg_request);
 			     //SQS polling
 			        ReceiveMessageRequest receive_request = new ReceiveMessageRequest().withQueueUrl(queueUrl).withWaitTimeSeconds(20);
 			        try {
-						Thread.sleep(4000);
+						Thread.sleep(7000);
 					} catch (InterruptedException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -853,7 +852,7 @@ public class BillController {
 //						e.printStackTrace();
 //					}
 //			        
-			     
+			        	 logger.info("Value of msg is" +msg);
 			        
 			      //publish topic to SNS
 			        	 logger.info("publishing to SNS");
@@ -863,9 +862,10 @@ public class BillController {
 			    	  logger.info("The topic is " + topic.getTopicArn());
 			    	  if(topic.getTopicArn().endsWith("TestBills"))
 			    	  {
-			    		
+			    		  logger.info("Inside topic arn - Value of msg is" +msg);
 			    		  PublishRequest pubRequest = new PublishRequest(topic.getTopicArn(), msg);
-			    		  sns.publish(pubRequest);
+			    		  PublishResult res = sns.publish(pubRequest);
+			    		  logger.info("result msg ID" +res.getMessageId());
 					      break;
 			    	  }
 			    	  
