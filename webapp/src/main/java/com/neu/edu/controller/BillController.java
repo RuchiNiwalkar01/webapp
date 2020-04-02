@@ -785,6 +785,14 @@ public class BillController {
 					return new ResponseEntity<String>(entity.toString() , HttpStatus.NOT_FOUND);
 				}
 			    logger.info("Num of days path variable : "+numOfDays);
+			    int negativedays = Integer.parseInt(numOfDays);
+			    if(negativedays<0)
+			    {
+
+					entity.addProperty("message", "The number of days cannot be negative");
+					return new ResponseEntity<String>(entity.toString() , HttpStatus.BAD_REQUEST);
+			    	
+			    }
 				JSONArray jsonArray = new JSONArray();
 				JSONObject jsonObject = new JSONObject();
 				jsonObject.put("username", user.getEmail());
