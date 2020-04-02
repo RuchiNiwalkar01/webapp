@@ -1,7 +1,9 @@
 package com.neu.edu.controller;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -11,6 +13,10 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -741,9 +747,10 @@ public class BillController {
 	  //Get Due bill by Specific User 
 	//200 for success, 401 no authorization
 	@GetMapping(value = "/v1/bills/due/{x}")
-	public ResponseEntity<?> getDueBillsByUserId(HttpServletRequest request, HttpServletResponse response, @PathVariable(value = "x") @NotBlank @NotNull int numOfDays)
+	public ResponseEntity<?> getDueBillsByUserId(HttpServletRequest request, HttpServletResponse response, @PathVariable(value = "x") @NotBlank @NotNull String numOfDays)
 	{
 		logger.info("Inside days to caulcate API");
+		int days = Integer.parseInt(numOfDays);
 		String authorization = request.getHeader("Authorization");
 		JsonObject entity = new JsonObject();
 		if(authorization != null && authorization.toLowerCase().startsWith("basic"))
@@ -772,30 +779,17 @@ public class BillController {
 			else
 			{
 				List<Bill> listOfBills = billRepository.findByUserId(user.getId());
-				
+				List<String> dueBills = new ArrayList<String>();
 				if(listOfBills.size() == 0)
 				{
 					entity.addProperty("message", "The bills do not exist");
 					return new ResponseEntity<String>(entity.toString() , HttpStatus.NOT_FOUND);
 				}
-				
-//				JSONArray jsonArray = new JSONArray();
-//				JSONObject jsonObject = new JSONObject();
-//				jsonObject.put("username", user.getEmail());
-				//jsonObject.put("NumOfDays", noOfDays);
-				
-				
-//				for(int i=0 ; i<listOfBills.size() ; i++)
-//				{
-//					jsonArray.add(listOfBills.get(i).getId());
-//					//logger.info("Entries: " + listOfBills.get(i).getId());
-//					
-//				}
-//				jsonObject.put("bills",jsonArray );
-			
-				//  System.out.println("The bills " + jsonObject.get("bills"));
-			   //   System.out.println();
-			  	logger.info("The email address " + user.getEmail());
+			    logger.info("Num of days path variable : "+days);
+				JSONArray jsonArray = new JSONArray();
+				JSONObject jsonObject = new JSONObject();
+				jsonObject.put("username", user.getEmail());
+				jsonObject.put("NumOfDays", days);
 			     //create SQS queue and send message
 			      
 			      final AmazonSQS sqs = AmazonSQSClientBuilder.standard().withRegion(Regions.US_EAST_1).build();
@@ -817,7 +811,7 @@ public class BillController {
 			    	logger.info("queueUrl "+queueUrl);
 			        SendMessageRequest send_msg_request = new SendMessageRequest()
 			                .withQueueUrl(queueUrl)
-			                .withMessageBody(user.getEmail())
+			                .withMessageBody(jsonObject.toString())
 			                .withDelaySeconds(5);
 			        sqs.sendMessage(send_msg_request);
 			        logger.info("Message Sent in Queue : "+send_msg_request);
@@ -839,21 +833,66 @@ public class BillController {
 			        		 msg= msg+m.getBody();
 			        	}
 			      //  String messageReceiptHandle = messages.get(0).getBody();				        
-//			        JSONParser parser = new JSONParser();
-//			        try 
-//			        {
-//						JSONObject json = (JSONObject) parser.parse(messageReceiptHandle);
-//						int num = (int) json.get("NumOfDays");
-//						
-//					} 
-//			        catch (ParseException e) 
-//			        {
-//					
-//						e.printStackTrace();
-//					}
-//			        
-			        	 logger.info("Value of msg is" +msg);
+			        JSONParser parser = new JSONParser();
+			        String uname = "";
+			        int calcNum = 0;
+			        try 
+			        {
+						JSONObject json = (JSONObject) parser.parse(msg);
+						 uname = (String) json.get("username");
+						 calcNum = (Integer) json.get("NumOfDays");
+						
+					} 
+			        catch (ParseException e) 
+			        {
+					
+						e.printStackTrace();
+					}
 			        
+			    logger.info("Value of Uname is" +uname);
+			    logger.info("Value of no of days  is" +calcNum);
+			        
+				
+				
+				
+				SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
+			    Calendar cal = Calendar.getInstance();
+			    Date date = cal.getTime();
+			    String todaysdate = dateFormat.format(date);
+			    logger.info("Todays date 1 : "+todaysdate);
+			    String currDate = todaysdate.split("-")[1];
+			    logger.info("Todays date Split day string : "+currDate);
+			    int currDatenum = Integer.parseInt(currDate);
+			    logger.info("Todays date Split day Int : "+currDatenum);
+				for(Bill b : listOfBills)
+				{
+					String duedateString = b.getDuedate().split("-")[2];
+					logger.info("Due date Split day string : "+duedateString);
+					int duedatenum = Integer.parseInt(duedateString);
+					logger.info("Due date Split day Int : "+duedatenum);
+					int calcDiff = duedatenum-currDatenum;
+					logger.info("Difference between dates: "+calcDiff);
+					if(calcDiff<days && b.getPaymentStatus().equals(PaymentStatus.due))
+					{
+						dueBills.add(b.getId());
+					}
+					
+				}
+				
+				
+				
+				for(int i=0 ; i<dueBills.size() ; i++)
+				{
+					jsonArray.add(dueBills.get(i));
+					logger.info("Entries: " + dueBills.get(i));
+					
+				}
+				JSONObject jsonObjectSNS = new JSONObject();
+				jsonObjectSNS.put("billsDue",jsonArray );
+				jsonObjectSNS.put("uname", uname);
+			 	logger.info("Bills Due Array" + jsonArray);
+			  	logger.info("The email address " + uname);
+
 			      //publish topic to SNS
 			        	 logger.info("publishing to SNS");
 			      List<Topic> topics = sns.listTopics().getTopics();
@@ -862,8 +901,8 @@ public class BillController {
 			    	  logger.info("The topic is " + topic.getTopicArn());
 			    	  if(topic.getTopicArn().endsWith("TestBills"))
 			    	  {
-			    		  logger.info("Inside topic arn - Value of msg is" +msg);
-			    		  PublishRequest pubRequest = new PublishRequest(topic.getTopicArn(), msg);
+			    		  logger.info("Inside topic arn - JSON-OBJ-SNS" +jsonObjectSNS);
+			    		  PublishRequest pubRequest = new PublishRequest(topic.getTopicArn(), jsonObjectSNS.toString());
 			    		  PublishResult res = sns.publish(pubRequest);
 			    		  logger.info("result msg ID" +res.getMessageId());
 					      break;
