@@ -875,10 +875,14 @@ public class BillController {
 					logger.info("Due date Split day Int : "+duedatenum);
 					int calcDiff = duedatenum-currDatenum;
 					logger.info("Difference between dates: "+calcDiff);
-					if( (calcDiff<number || calcDiff==0 ) && b.getPaymentStatus().equals(PaymentStatus.due))
+					if(calcDiff>=0)
 					{
-						dueBills.add(b.getId());
+						if( (calcDiff<number || calcDiff==0 ) && b.getPaymentStatus().equals(PaymentStatus.due))
+						{
+							dueBills.add(b.getId());
+						}
 					}
+					
 					
 				}
 				
