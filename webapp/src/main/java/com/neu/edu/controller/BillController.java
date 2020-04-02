@@ -860,7 +860,7 @@ public class BillController {
 			    Date date = cal.getTime();
 			    String todaysdate = dateFormat.format(date);
 			    logger.info("Todays date 1 : "+todaysdate);
-			    String currDate = todaysdate.split("-")[1];
+			    String currDate = todaysdate.split("/")[1];
 			    logger.info("Todays date Split day string : "+currDate);
 			    int currDatenum = Integer.parseInt(currDate);
 			    logger.info("Todays date Split day Int : "+currDatenum);
