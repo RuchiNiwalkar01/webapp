@@ -856,8 +856,6 @@ public class BillController {
 			    logger.info("Value of no of days  is" +number);
 			        
 				
-				
-				
 				SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
 			    Calendar cal = Calendar.getInstance();
 			    Date date = cal.getTime();
@@ -875,7 +873,7 @@ public class BillController {
 					logger.info("Due date Split day Int : "+duedatenum);
 					int calcDiff = duedatenum-currDatenum;
 					logger.info("Difference between dates: "+calcDiff);
-					if(calcDiff<number && b.getPaymentStatus().equals(PaymentStatus.due))
+					if( (calcDiff<number || calcDiff==0 ) && b.getPaymentStatus().equals(PaymentStatus.due))
 					{
 						dueBills.add(b.getId());
 					}
