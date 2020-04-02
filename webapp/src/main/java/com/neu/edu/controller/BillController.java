@@ -833,7 +833,7 @@ public class BillController {
 			        	{
 			        
 			        		 logger.info("Message content is: "+m.getBody());
-			        		 sqs.changeMessageVisibility(queueUrl, m.getBody(),  60 * 60);
+			        		 sqs.changeMessageVisibility(queueUrl, m.getReceiptHandle(),  60 * 60);
 			        		 msg= msg+m.getBody();
 			        	}
 			      //  String messageReceiptHandle = messages.get(0).getBody();				        
