@@ -860,6 +860,7 @@ public class BillController {
 			      {
 			    	  if(topic.getTopicArn().startsWith("TestBills"))
 			    	  {
+			    		  
 			    		  logger.info("The topic is " + topic.getTopicArn());
 			    		  PublishRequest pubRequest = new PublishRequest(topic.getTopicArn(), user.getEmail());
 					      sns.publish(pubRequest);
