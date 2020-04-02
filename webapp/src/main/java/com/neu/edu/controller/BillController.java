@@ -750,7 +750,6 @@ public class BillController {
 	public ResponseEntity<?> getDueBillsByUserId(HttpServletRequest request, HttpServletResponse response, @PathVariable(value = "x") @NotBlank @NotNull String numOfDays)
 	{
 		logger.info("Inside days to caulcate API");
-		int days = Integer.parseInt(numOfDays);
 		String authorization = request.getHeader("Authorization");
 		JsonObject entity = new JsonObject();
 		if(authorization != null && authorization.toLowerCase().startsWith("basic"))
@@ -785,11 +784,11 @@ public class BillController {
 					entity.addProperty("message", "The bills do not exist");
 					return new ResponseEntity<String>(entity.toString() , HttpStatus.NOT_FOUND);
 				}
-			    logger.info("Num of days path variable : "+days);
+			    logger.info("Num of days path variable : "+numOfDays);
 				JSONArray jsonArray = new JSONArray();
 				JSONObject jsonObject = new JSONObject();
 				jsonObject.put("username", user.getEmail());
-				jsonObject.put("NumOfDays", days);
+				jsonObject.put("NumOfDays", numOfDays);
 			     //create SQS queue and send message
 			      
 			      final AmazonSQS sqs = AmazonSQSClientBuilder.standard().withRegion(Regions.US_EAST_1).build();
@@ -835,22 +834,23 @@ public class BillController {
 			      //  String messageReceiptHandle = messages.get(0).getBody();				        
 			        JSONParser parser = new JSONParser();
 			        String uname = "";
-			        int calcNum = 0;
+			        String calcNum = "";
+			        int number = 0;
 			        try 
 			        {
-						JSONObject json = (JSONObject) parser.parse(msg);
+						 JSONObject json = (JSONObject) parser.parse(msg);
 						 uname = (String) json.get("username");
-						 calcNum = (Integer) json.get("NumOfDays");
-						
+						 calcNum = (String) json.get("NumOfDays");
+								
 					} 
 			        catch (ParseException e) 
 			        {
 					
 						e.printStackTrace();
 					}
-			        
+			   	 number = Integer.parseInt(calcNum);
 			    logger.info("Value of Uname is" +uname);
-			    logger.info("Value of no of days  is" +calcNum);
+			    logger.info("Value of no of days  is" +number);
 			        
 				
 				
@@ -872,7 +872,7 @@ public class BillController {
 					logger.info("Due date Split day Int : "+duedatenum);
 					int calcDiff = duedatenum-currDatenum;
 					logger.info("Difference between dates: "+calcDiff);
-					if(calcDiff<days && b.getPaymentStatus().equals(PaymentStatus.due))
+					if(calcDiff<number && b.getPaymentStatus().equals(PaymentStatus.due))
 					{
 						dueBills.add(b.getId());
 					}
