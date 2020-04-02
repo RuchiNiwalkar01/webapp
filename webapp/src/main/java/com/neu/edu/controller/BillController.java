@@ -814,7 +814,10 @@ public class BillController {
 			                .withDelaySeconds(5);
 			        sqs.sendMessage(send_msg_request);
 			        logger.info("Message Sent in Queue : "+send_msg_request);
+			     
 			     //SQS polling
+			        new Thread() {
+			            public void run() {
 			        ReceiveMessageRequest receive_request = new ReceiveMessageRequest().withQueueUrl(queueUrl).withWaitTimeSeconds(20);
 			        try {
 						Thread.sleep(7000);
@@ -909,6 +912,7 @@ public class BillController {
 			    	  }
 			    	  
 			      }
+			}}.start();
 			     entity.addProperty("message", "Bills Due added succesfully");
 				return new ResponseEntity<String>(entity.toString() , HttpStatus.OK);
 			    
