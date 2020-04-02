@@ -799,7 +799,7 @@ public class BillController {
 			  	logger.info("The email address " + user.getEmail());
 			     //create SQS queue and send message
 			      
-			      final AmazonSQS sqs = AmazonSQSClientBuilder.defaultClient();
+			      final AmazonSQS sqs = AmazonSQSClientBuilder.standard().withRegion(Regions.US_EAST_1).build();
 
 			        try 
 			        {
@@ -824,6 +824,12 @@ public class BillController {
 			        logger.info("Message Sent in Queue : "+send_msg_request);
 			     //SQS polling
 			        ReceiveMessageRequest receive_request = new ReceiveMessageRequest().withQueueUrl(queueUrl).withWaitTimeSeconds(20);
+			        try {
+						Thread.sleep(4000);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 			        List<Message> messages = sqs.receiveMessage(receive_request).getMessages();
 			        logger.info("Message received no : "+messages.size());
 			        AmazonSNS sns = AmazonSNSAsyncClientBuilder.standard().withRegion(Regions.US_EAST_1).build();
