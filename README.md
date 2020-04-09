@@ -39,7 +39,8 @@ Prerequisites for building the application:
 
 ## Running Tests
 
-Run the unit test from test package- "Run as JUnit"
+1. Run the unit test from test package- "Run as JUnit"
+2. Run load testing from testplan.jmx file on jMeter
 
 ## CI/CD
 
@@ -47,5 +48,4 @@ Make commit to the git repository to invoke the build in CircleCI for the organi
 
 ## Build Deploy
 
-Make commit to the git repository to invoke the build in CircleCI for organization repository
-Test
+Make commit to the git repository to invoke the build in CircleCI for organization repository and check for successful CodeDeploy
